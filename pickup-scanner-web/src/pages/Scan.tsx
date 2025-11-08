@@ -276,27 +276,35 @@ export default function Scan() {
     const videoElement = videoRef.current;
     if (!barcodeDetectorRef.current || !videoElement) return;
 
+    let lastScanTime = 0;
+
     const detectBarcodes = async () => {
       const detector = barcodeDetectorRef.current;
-      if (!detector || !isScanning || isPaused) return;
+      if (!detector || !isScanning) return;
 
       try {
         const barcodes = await detector.detect(videoElement);
+        console.log('🔍 Detection attempt:', barcodes.length, 'barcodes found');
         if (barcodes.length > 0) {
           const tracking = barcodes[0]?.rawValue;
-          if (tracking) {
+          const now = Date.now();
+          
+          console.log('📊 Barcode data:', tracking, 'Time since last:', now - lastScanTime);
+          
+          if (tracking && now - lastScanTime > 500) { // Prevent rapid duplicate scans
+            lastScanTime = now;
             console.log('📱 Barcode detected:', tracking);
             setIsPaused(true); // Show pause indicator
             addScanMutation.mutate(tracking);
             
-            // Resume scanning after a short delay (scanning continues in background)
+            // Hide pause indicator after delay
             setTimeout(() => {
-              setIsPaused(false); // Hide pause indicator
+              setIsPaused(false);
             }, 500); // 0.5 second pause between scans
           }
         }
-      } catch {
-        // Ignore detection errors, they're common
+      } catch (error) {
+        console.log('❌ Detection error:', error);
       }
     };
 
@@ -309,13 +317,17 @@ export default function Scan() {
     
     let lastScanTime = 0;
     
+    console.log('🎯 Starting ZXing detection');
     codeReaderRef.current = new BrowserMultiFormatReader();
     
     // Create a wrapper to handle continuous scanning
     const handleResult = (result: any) => {
+      console.log('🔍 ZXing detection attempt:', result);
       if (result && isScanning) {
         const tracking = result.getText();
         const now = Date.now();
+        
+        console.log('📊 ZXing data:', tracking, 'Time since last:', now - lastScanTime);
         
         if (tracking && now - lastScanTime > 500) { // Prevent rapid duplicate scans
           lastScanTime = now;
