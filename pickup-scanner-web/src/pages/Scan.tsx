@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { 
   ArrowLeft, 
   Camera, 
+  Check,
   FlashlightOff, 
   Flashlight, 
   Keyboard, 
@@ -40,7 +41,7 @@ export default function Scan() {
   const [flashOn, setFlashOn] = useState(false);
   const [lastScanId, setLastScanId] = useState<number | null>(null);
   const [showManualInput, setShowManualInput] = useState(false);
-  const [isPaused, setIsPaused] = useState(false); // New state for scan pause
+  const [showScanButton, setShowScanButton] = useState(false); // Show scan button after successful scan
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -261,22 +262,11 @@ export default function Scan() {
           const tracking = barcodes[0]?.rawValue;
           if (tracking) {
             console.log('📱 Barcode detected:', tracking);
-            setIsPaused(true); // Show pause indicator
             addScanMutation.mutate(tracking);
             
-            // Brief pause to prevent multiple rapid scans of the same code
-            if (scanIntervalRef.current) {
-              clearInterval(scanIntervalRef.current);
-              scanIntervalRef.current = null;
-            }
-            
-            // Resume scanning after a short delay
-            setTimeout(() => {
-              setIsPaused(false); // Hide pause indicator
-              if (isScanning && barcodeDetectorRef.current) {
-                scanIntervalRef.current = window.setInterval(detectBarcodes, 100);
-              }
-            }, 1500); // 1.5 second pause between scans
+            // Stop scanning and show scan button
+            stopScanning();
+            setShowScanButton(true);
           }
         }
       } catch {
@@ -299,31 +289,11 @@ export default function Scan() {
         const tracking = result.getText();
         if (tracking) {
           console.log('📱 Barcode detected (ZXing):', tracking);
-          setIsPaused(true); // Show pause indicator
           addScanMutation.mutate(tracking);
           
-          // Brief pause to prevent multiple rapid scans
-          if (codeReaderRef.current) {
-            const reader = codeReaderRef.current as BrowserMultiFormatReader & { reset?: () => void };
-            try {
-              reader.reset?.();
-            } catch {
-              // Ignore reset errors
-            }
-            
-            // Resume scanning after delay
-            setTimeout(() => {
-              setIsPaused(false); // Hide pause indicator
-              if (isScanning && videoRef.current) {
-                codeReaderRef.current = new BrowserMultiFormatReader();
-                codeReaderRef.current.decodeFromVideoDevice(
-                  undefined,
-                  videoRef.current,
-                  handleResult
-                );
-              }
-            }, 1500); // 1.5 second pause between scans
-          }
+          // Stop scanning and show scan button
+          stopScanning();
+          setShowScanButton(true);
         }
       }
       // Continue scanning - don't stop on errors
@@ -545,24 +515,11 @@ export default function Scan() {
             
             {/* Instructions */}
             <div className="absolute left-4 right-4 top-8">
-              <div className={`mx-auto max-w-sm rounded-2xl border px-6 py-4 text-center backdrop-blur transition-colors ${
-                isPaused 
-                  ? 'border-green-400/50 bg-green-500/20 text-green-100' 
-                  : 'border-white/10 bg-black/60 text-white'
-              }`}>
-                {isPaused ? (
-                  <>
-                    <p className="text-sm font-semibold">✅ Scanned!</p>
-                    <p className="mt-1 text-xs text-green-200">Resuming in a moment...</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="text-sm font-semibold">Point camera at barcode</p>
-                    <p className="mt-1 text-xs text-slate-300">
-                      {isBarcodeDetectorSupported() ? 'Native detection active' : 'ZXing fallback active'}
-                    </p>
-                  </>
-                )}
+              <div className="mx-auto max-w-sm rounded-2xl border border-white/10 bg-black/60 px-6 py-4 text-center text-white backdrop-blur">
+                <p className="text-sm font-semibold">Point camera at barcode</p>
+                <p className="mt-1 text-xs text-slate-300">
+                  {isBarcodeDetectorSupported() ? 'Native detection active' : 'ZXing fallback active'}
+                </p>
               </div>
             </div>
 
@@ -611,6 +568,33 @@ export default function Scan() {
                   <RotateCcw className="h-6 w-6" />
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Scan Next Button Overlay */}
+        {showScanButton && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/90 backdrop-blur">
+            <div className="w-full max-w-sm px-6 text-center">
+              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full border-2 border-green-500 bg-green-500/20 text-green-400">
+                <Check className="h-10 w-10" />
+              </div>
+              <h3 className="mb-2 text-xl font-semibold text-white">Barcode Scanned!</h3>
+              <p className="mb-8 text-sm text-slate-300">Ready to scan the next item</p>
+              <button
+                onClick={() => {
+                  console.log('🔄 Scan Next button clicked');
+                  setShowScanButton(false);
+                  startCamera();
+                }}
+                className="w-full rounded-2xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:bg-blue-500 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98] active:bg-blue-700"
+                type="button"
+              >
+                <span className="flex items-center justify-center gap-3">
+                  <Camera className="h-6 w-6" />
+                  Scan Next
+                </span>
+              </button>
             </div>
           </div>
         )}
