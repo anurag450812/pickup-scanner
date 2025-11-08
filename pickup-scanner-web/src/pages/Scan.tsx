@@ -606,17 +606,19 @@ export default function Scan() {
           <div className="absolute inset-0 z-10">
             {/* Scan Button Overlay - show when not detecting */}
             {showScanButton && (
-              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-                <button
-                  onClick={startDetection}
-                  className="rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 px-12 py-6 text-2xl font-black text-white shadow-2xl transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:scale-105 hover:shadow-3xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-95"
-                  type="button"
-                >
-                  <span className="flex items-center justify-center gap-4">
-                    <Camera className="h-10 w-10" />
-                    START SCAN
-                  </span>
-                </button>
+              <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                <div className="text-center">
+                  <button
+                    onClick={startDetection}
+                    className="rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 px-16 py-8 text-3xl font-black text-white shadow-2xl transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:scale-105 hover:shadow-3xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-95"
+                    type="button"
+                  >
+                    <span className="flex items-center justify-center gap-6">
+                      <Camera className="h-12 w-12" />
+                      START SCAN
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
 
