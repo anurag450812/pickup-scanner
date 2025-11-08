@@ -159,14 +159,31 @@ export function isBarcodeDetectorSupported(): boolean {
  */
 export async function requestCameraPermission(): Promise<boolean> {
   try {
+    console.log('🔐 Checking camera permission...');
+    
+    // Check if MediaDevices API is available
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error('❌ MediaDevices API not available');
+      return false;
+    }
+
     const stream = await navigator.mediaDevices.getUserMedia({ 
       video: { facingMode: 'environment' } 
     });
+    console.log('✅ Permission test successful');
+    
     // Stop the stream immediately, we just wanted to check permission
-    stream.getTracks().forEach(track => track.stop());
+    stream.getTracks().forEach(track => {
+      track.stop();
+      console.log('🛑 Stopped permission test track:', track.kind);
+    });
     return true;
   } catch (error) {
-    console.warn('Camera permission denied:', error);
+    console.error('❌ Camera permission check failed:', error);
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+    }
     return false;
   }
 }

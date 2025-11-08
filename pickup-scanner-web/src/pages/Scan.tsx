@@ -162,49 +162,110 @@ export default function Scan() {
   // Start camera
   const startCamera = async () => {
     try {
+      console.log('🎥 Starting camera...');
       setCameraError(null);
       
-      // Request camera permission first
-      const hasPermission = await requestCameraPermission();
-      if (!hasPermission) {
-        setCameraError('Camera permission denied. Please enable camera access.');
+      // Check if MediaDevices API is available
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error('❌ MediaDevices API not supported');
+        setCameraError('Camera API not supported in this browser.');
         return;
       }
+
+      // Check if we're on HTTPS or localhost
+      const isSecureContext = window.isSecureContext || location.protocol === 'https:' || location.hostname === 'localhost';
+      if (!isSecureContext) {
+        console.error('❌ Camera requires HTTPS');
+        setCameraError('Camera access requires HTTPS. Please use a secure connection.');
+        return;
+      }
+      
+      // Request camera permission first
+      console.log('🔐 Requesting camera permission...');
+      const hasPermission = await requestCameraPermission();
+      if (!hasPermission) {
+        console.error('❌ Camera permission denied');
+        setCameraError('Camera permission denied. Please enable camera access in your browser settings.');
+        return;
+      }
+      console.log('✅ Camera permission granted');
 
       const videoConstraints: MediaTrackConstraints = selectedCameraId
         ? { deviceId: { exact: selectedCameraId }, width: { ideal: 1280 }, height: { ideal: 720 } }
         : { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } };
 
+      console.log('📹 Getting user media with constraints:', videoConstraints);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: videoConstraints
       });
+      console.log('✅ Media stream obtained:', stream.getVideoTracks().length, 'video tracks');
 
       streamRef.current = stream;
       
       if (videoRef.current) {
+        console.log('🎬 Setting video source and playing...');
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
         setIsScanning(true);
+        console.log('✅ Video playing successfully');
 
         // Torch support detection
         const track = stream.getVideoTracks()[0];
         if (track) {
           const capabilities = track.getCapabilities?.() as (MediaTrackCapabilities & { torch?: boolean }) | undefined;
           setHasTorch(Boolean(capabilities?.torch));
+          console.log('💡 Torch support:', Boolean(capabilities?.torch));
         } else {
           setHasTorch(false);
+          console.log('⚠️ No video track found for torch detection');
         }
         
         // Try BarcodeDetector first, fallback to ZXing
+        console.log('🔍 Initializing barcode detection...');
         if (initBarcodeDetector()) {
+          console.log('✅ Using native BarcodeDetector');
           startBarcodeDetection();
         } else {
+          console.log('📚 Using ZXing fallback');
           startZXingDetection();
         }
+      } else {
+        console.error('❌ Video element not found');
+        setCameraError('Video element not ready. Please try again.');
       }
     } catch (error) {
-      console.error('Camera error:', error);
-      setCameraError('Failed to access camera. Please check permissions.');
+      console.error('❌ Camera error:', error);
+      
+      // Provide more specific error messages
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          setCameraError('Camera permission denied. Please allow camera access and try again.');
+        } else if (error.name === 'NotFoundError') {
+          setCameraError('No camera found. Please connect a camera and try again.');
+        } else if (error.name === 'NotReadableError') {
+          setCameraError('Camera is busy or unavailable. Please close other apps using the camera.');
+        } else if (error.name === 'OverconstrainedError') {
+          setCameraError('Camera constraints not supported. Trying with basic settings...');
+          // Retry with simpler constraints
+          try {
+            const simpleStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            streamRef.current = simpleStream;
+            if (videoRef.current) {
+              videoRef.current.srcObject = simpleStream;
+              await videoRef.current.play();
+              setIsScanning(true);
+              setCameraError(null);
+            }
+          } catch (retryError) {
+            console.error('❌ Retry failed:', retryError);
+            setCameraError('Failed to access camera with any settings.');
+          }
+        } else {
+          setCameraError(`Camera error: ${error.message}`);
+        }
+      } else {
+        setCameraError('Failed to access camera. Please check permissions and try again.');
+      }
     }
   };
 
