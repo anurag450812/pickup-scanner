@@ -40,6 +40,7 @@ export default function Scan() {
   const [flashOn, setFlashOn] = useState(false);
   const [lastScanId, setLastScanId] = useState<number | null>(null);
   const [showManualInput, setShowManualInput] = useState(false);
+  const [isPaused, setIsPaused] = useState(false); // New state for scan pause
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -90,7 +91,8 @@ export default function Scan() {
       if (vibratePref) vibrate(100);
       if (beepPref) playBeep();
       
-      toast.success(`Saved: ${tracking}`, {
+      toast.success(`✅ Scanned: ${tracking}`, {
+        duration: 2000, // Shorter duration for continuous scanning
         action: {
           label: 'Undo',
           onClick: () => undoLastScan()
@@ -276,23 +278,30 @@ export default function Scan() {
 
     const detectBarcodes = async () => {
       const detector = barcodeDetectorRef.current;
-      if (!detector) return;
+      if (!detector || !isScanning) return;
 
       try {
         const barcodes = await detector.detect(videoElement);
         if (barcodes.length > 0) {
           const tracking = barcodes[0]?.rawValue;
           if (tracking) {
+            console.log('📱 Barcode detected:', tracking);
+            setIsPaused(true); // Show pause indicator
             addScanMutation.mutate(tracking);
-            stopScanning();
-            if (restartTimeoutRef.current) {
-              window.clearTimeout(restartTimeoutRef.current);
+            
+            // Brief pause to prevent multiple rapid scans of the same code
+            if (scanIntervalRef.current) {
+              clearInterval(scanIntervalRef.current);
+              scanIntervalRef.current = null;
             }
-            restartTimeoutRef.current = window.setTimeout(() => {
-              if (isScanning) {
-                startCamera();
+            
+            // Resume scanning after a short delay
+            setTimeout(() => {
+              setIsPaused(false); // Hide pause indicator
+              if (isScanning && barcodeDetectorRef.current) {
+                scanIntervalRef.current = window.setInterval(detectBarcodes, 100);
               }
-            }, 1000);
+            }, 1500); // 1.5 second pause between scans
           }
         }
       } catch {
@@ -309,27 +318,46 @@ export default function Scan() {
     
     codeReaderRef.current = new BrowserMultiFormatReader();
     
+    // Create a wrapper to handle continuous scanning
+    const handleResult = (result: any) => {
+      if (result && isScanning) {
+        const tracking = result.getText();
+        if (tracking) {
+          console.log('📱 Barcode detected (ZXing):', tracking);
+          setIsPaused(true); // Show pause indicator
+          addScanMutation.mutate(tracking);
+          
+          // Brief pause to prevent multiple rapid scans
+          if (codeReaderRef.current) {
+            const reader = codeReaderRef.current as BrowserMultiFormatReader & { reset?: () => void };
+            try {
+              reader.reset?.();
+            } catch {
+              // Ignore reset errors
+            }
+            
+            // Resume scanning after delay
+            setTimeout(() => {
+              setIsPaused(false); // Hide pause indicator
+              if (isScanning && videoRef.current) {
+                codeReaderRef.current = new BrowserMultiFormatReader();
+                codeReaderRef.current.decodeFromVideoDevice(
+                  undefined,
+                  videoRef.current,
+                  handleResult
+                );
+              }
+            }, 1500); // 1.5 second pause between scans
+          }
+        }
+      }
+      // Continue scanning - don't stop on errors
+    };
+    
     codeReaderRef.current.decodeFromVideoDevice(
       undefined, // Use default camera
       videoRef.current,
-      (result) => {
-        if (result) {
-          const tracking = result.getText();
-          if (tracking) {
-            addScanMutation.mutate(tracking);
-            stopScanning();
-            if (restartTimeoutRef.current) {
-              window.clearTimeout(restartTimeoutRef.current);
-            }
-            restartTimeoutRef.current = window.setTimeout(() => {
-              if (isScanning) {
-                startCamera();
-              }
-            }, 1000);
-          }
-        }
-        // Ignore errors, they're common during scanning
-      }
+      handleResult
     );
   };
 
@@ -542,11 +570,24 @@ export default function Scan() {
             
             {/* Instructions */}
             <div className="absolute left-4 right-4 top-8">
-              <div className="mx-auto max-w-sm rounded-2xl border border-white/10 bg-black/60 px-6 py-4 text-center backdrop-blur">
-                <p className="text-sm font-semibold text-white">Point camera at barcode</p>
-                <p className="mt-1 text-xs text-slate-300">
-                  {isBarcodeDetectorSupported() ? 'Native detection active' : 'ZXing fallback active'}
-                </p>
+              <div className={`mx-auto max-w-sm rounded-2xl border px-6 py-4 text-center backdrop-blur transition-colors ${
+                isPaused 
+                  ? 'border-green-400/50 bg-green-500/20 text-green-100' 
+                  : 'border-white/10 bg-black/60 text-white'
+              }`}>
+                {isPaused ? (
+                  <>
+                    <p className="text-sm font-semibold">✅ Scanned!</p>
+                    <p className="mt-1 text-xs text-green-200">Resuming in a moment...</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold">Point camera at barcode</p>
+                    <p className="mt-1 text-xs text-slate-300">
+                      {isBarcodeDetectorSupported() ? 'Native detection active' : 'ZXing fallback active'}
+                    </p>
+                  </>
+                )}
               </div>
             </div>
 
