@@ -208,30 +208,38 @@ export default function Scan() {
       if (videoRef.current) {
         console.log('🎬 Setting video source and playing...');
         videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setIsScanning(true);
-        console.log('✅ Video playing successfully');
-
-        // Torch support detection
-        const track = stream.getVideoTracks()[0];
-        if (track) {
-          const capabilities = track.getCapabilities?.() as (MediaTrackCapabilities & { torch?: boolean }) | undefined;
-          setHasTorch(Boolean(capabilities?.torch));
-          console.log('💡 Torch support:', Boolean(capabilities?.torch));
-        } else {
-          setHasTorch(false);
-          console.log('⚠️ No video track found for torch detection');
-        }
         
-        // Try BarcodeDetector first, fallback to ZXing
-        console.log('🔍 Initializing barcode detection...');
-        if (initBarcodeDetector()) {
-          console.log('✅ Using native BarcodeDetector');
-          startBarcodeDetection();
-        } else {
-          console.log('📚 Using ZXing fallback');
-          startZXingDetection();
-        }
+        // Wait for video to be ready before starting detection
+        videoRef.current.onloadedmetadata = async () => {
+          if (videoRef.current) {
+            await videoRef.current.play();
+            setIsScanning(true);
+            console.log('✅ Video playing successfully');
+
+            // Torch support detection
+            const track = stream.getVideoTracks()[0];
+            if (track) {
+              const capabilities = track.getCapabilities?.() as (MediaTrackCapabilities & { torch?: boolean }) | undefined;
+              setHasTorch(Boolean(capabilities?.torch));
+              console.log('💡 Torch support:', Boolean(capabilities?.torch));
+            } else {
+              setHasTorch(false);
+              console.log('⚠️ No video track found for torch detection');
+            }
+            
+            // Wait a bit more for video to stabilize, then start detection
+            setTimeout(() => {
+              console.log('🔍 Initializing barcode detection...');
+              if (initBarcodeDetector()) {
+                console.log('✅ Using native BarcodeDetector');
+                startBarcodeDetection();
+              } else {
+                console.log('📚 Using ZXing fallback');
+                startZXingDetection();
+              }
+            }, 500); // 500ms delay to ensure video is stable
+          }
+        };
       } else {
         console.error('❌ Video element not found');
         setCameraError('Video element not ready. Please try again.');
@@ -275,11 +283,23 @@ export default function Scan() {
   // Start barcode detection with native API
   const startBarcodeDetection = () => {
     const videoElement = videoRef.current;
-    if (!barcodeDetectorRef.current || !videoElement) return;
+    if (!barcodeDetectorRef.current || !videoElement) {
+      console.warn('⚠️ BarcodeDetector or video element not ready');
+      return;
+    }
+
+    // Ensure video is playing and has dimensions
+    if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+      console.warn('⚠️ Video not ready yet, retrying in 100ms...');
+      setTimeout(() => startBarcodeDetection(), 100);
+      return;
+    }
+
+    console.log('🎯 Starting native barcode detection...');
 
     const detectBarcodes = async () => {
       const detector = barcodeDetectorRef.current;
-      if (!detector || !isScanning) return;
+      if (!detector || !isScanning || !videoElement) return;
 
       try {
         const barcodes = await detector.detect(videoElement);
@@ -294,8 +314,9 @@ export default function Scan() {
             setShowScanButton(true);
           }
         }
-      } catch {
-        // Ignore detection errors, they're common
+      } catch (error) {
+        // Log errors but continue scanning
+        console.warn('⚠️ Detection error (continuing):', error);
       }
     };
 
@@ -304,7 +325,21 @@ export default function Scan() {
 
   // Start ZXing detection
   const startZXingDetection = () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current) {
+      console.warn('⚠️ Video element not ready for ZXing detection');
+      return;
+    }
+    
+    const videoElement = videoRef.current;
+    
+    // Ensure video is playing and has dimensions
+    if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+      console.warn('⚠️ Video not ready for ZXing yet, retrying in 100ms...');
+      setTimeout(() => startZXingDetection(), 100);
+      return;
+    }
+
+    console.log('🎯 Starting ZXing barcode detection...');
     
     codeReaderRef.current = new BrowserMultiFormatReader();
     
@@ -324,11 +359,22 @@ export default function Scan() {
       // Continue scanning - don't stop on errors
     };
     
-    codeReaderRef.current.decodeFromVideoDevice(
-      undefined, // Use default camera
-      videoRef.current,
-      handleResult
-    );
+    // Add error handling for ZXing initialization
+    try {
+      codeReaderRef.current.decodeFromVideoDevice(
+        undefined, // Use default camera
+        videoRef.current,
+        handleResult
+      );
+    } catch (error) {
+      console.error('❌ ZXing initialization failed:', error);
+      // Retry ZXing initialization
+      setTimeout(() => {
+        if (isScanning && videoRef.current) {
+          startZXingDetection();
+        }
+      }, 1000);
+    }
   };
 
   // Stop scanning
@@ -600,14 +646,14 @@ export default function Scan() {
 
       {/* Super Big Scan Next Button - Bottom */}
       {showScanButton && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent p-6 pb-8">
-          <div className="mx-auto max-w-md">
-            <div className="mb-4 text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20 text-green-400">
-                <Check className="h-8 w-8" />
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent p-4 pb-6">
+          <div className="mx-auto max-w-lg">
+            <div className="mb-6 text-center">
+              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/20 text-green-400">
+                <Check className="h-12 w-12" />
               </div>
-              <h3 className="text-lg font-semibold text-white">Barcode Scanned!</h3>
-              <p className="text-sm text-slate-400">Ready to scan the next item</p>
+              <h3 className="text-2xl font-bold text-white">Barcode Scanned!</h3>
+              <p className="mt-2 text-lg text-slate-300">Ready to scan the next item</p>
             </div>
             <button
               onClick={() => {
@@ -615,11 +661,11 @@ export default function Scan() {
                 setShowScanButton(false);
                 startCamera();
               }}
-              className="w-full rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-6 text-xl font-bold text-white shadow-2xl transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:scale-[1.02] hover:shadow-3xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
+              className="w-full rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 px-12 py-8 text-3xl font-black text-white shadow-2xl transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:scale-[1.02] hover:shadow-3xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
               type="button"
             >
-              <span className="flex items-center justify-center gap-4">
-                <Camera className="h-8 w-8" />
+              <span className="flex items-center justify-center gap-6">
+                <Camera className="h-12 w-12" />
                 SCAN NEXT
               </span>
             </button>
