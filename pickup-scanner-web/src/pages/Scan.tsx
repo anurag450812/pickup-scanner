@@ -278,7 +278,7 @@ export default function Scan() {
 
     const detectBarcodes = async () => {
       const detector = barcodeDetectorRef.current;
-      if (!detector || !isScanning) return;
+      if (!detector || !isScanning || isPaused) return;
 
       try {
         const barcodes = await detector.detect(videoElement);
@@ -289,19 +289,10 @@ export default function Scan() {
             setIsPaused(true); // Show pause indicator
             addScanMutation.mutate(tracking);
             
-            // Brief pause to prevent multiple rapid scans of the same code
-            if (scanIntervalRef.current) {
-              clearInterval(scanIntervalRef.current);
-              scanIntervalRef.current = null;
-            }
-            
-            // Resume scanning after a short delay
+            // Resume scanning after a short delay (scanning continues in background)
             setTimeout(() => {
               setIsPaused(false); // Hide pause indicator
-              if (isScanning && barcodeDetectorRef.current) {
-                scanIntervalRef.current = window.setInterval(detectBarcodes, 100);
-              }
-            }, 1500); // 1.5 second pause between scans
+            }, 500); // 0.5 second pause between scans
           }
         }
       } catch {
@@ -316,42 +307,29 @@ export default function Scan() {
   const startZXingDetection = () => {
     if (!videoRef.current) return;
     
+    let lastScanTime = 0;
+    
     codeReaderRef.current = new BrowserMultiFormatReader();
     
     // Create a wrapper to handle continuous scanning
     const handleResult = (result: any) => {
       if (result && isScanning) {
         const tracking = result.getText();
-        if (tracking) {
+        const now = Date.now();
+        
+        if (tracking && now - lastScanTime > 500) { // Prevent rapid duplicate scans
+          lastScanTime = now;
           console.log('📱 Barcode detected (ZXing):', tracking);
           setIsPaused(true); // Show pause indicator
           addScanMutation.mutate(tracking);
           
-          // Brief pause to prevent multiple rapid scans
-          if (codeReaderRef.current) {
-            const reader = codeReaderRef.current as BrowserMultiFormatReader & { reset?: () => void };
-            try {
-              reader.reset?.();
-            } catch {
-              // Ignore reset errors
-            }
-            
-            // Resume scanning after delay
-            setTimeout(() => {
-              setIsPaused(false); // Hide pause indicator
-              if (isScanning && videoRef.current) {
-                codeReaderRef.current = new BrowserMultiFormatReader();
-                codeReaderRef.current.decodeFromVideoDevice(
-                  undefined,
-                  videoRef.current,
-                  handleResult
-                );
-              }
-            }, 1500); // 1.5 second pause between scans
-          }
+          // Hide pause indicator after delay
+          setTimeout(() => {
+            setIsPaused(false);
+          }, 500); // 0.5 second pause between scans
         }
       }
-      // Continue scanning - don't stop on errors
+      // Continue scanning - don't stop on errors or after detection
     };
     
     codeReaderRef.current.decodeFromVideoDevice(
