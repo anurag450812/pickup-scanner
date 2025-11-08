@@ -306,9 +306,15 @@ export default function Scan() {
       } catch (error) {
         console.log('❌ Detection error:', error);
       }
+
+      // Continue detection loop
+      if (isScanning) {
+        requestAnimationFrame(detectBarcodes);
+      }
     };
 
-    scanIntervalRef.current = window.setInterval(detectBarcodes, 100);
+    // Start the detection loop
+    detectBarcodes();
   };
 
   // Start ZXing detection
