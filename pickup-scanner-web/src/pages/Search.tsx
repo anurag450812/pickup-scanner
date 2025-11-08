@@ -1,19 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { 
-  ArrowLeft, 
-  Search as SearchIcon, 
-  CheckCircle2, 
-  XCircle, 
+import {
+  ArrowLeft,
+  Search as SearchIcon,
+  CheckCircle2,
+  XCircle,
   Copy,
   AlertTriangle,
   ClipboardPaste,
-  Circle
+  Circle,
 } from 'lucide-react';
 import { scanOperations, type Scan } from '../db/dexie';
 import { formatTime, formatDate, debounce, normalizeTracking, highlightSearchTerm } from '../lib/normalize';
+import { PageLayout } from '../components/PageLayout';
 
 // Interface for bulk search result
 interface BulkSearchResult {
@@ -113,7 +113,7 @@ export default function Search() {
       } else {
         toast.info(`Found ${foundCount} of ${totalCount} tracking numbers`);
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to perform bulk search');
     } finally {
       setIsSearching(false);
@@ -122,289 +122,244 @@ export default function Search() {
 
   // Focus search input on mount
   useEffect(() => {
-    // Auto-focus search input unless already typing
-    const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
-    if (searchInput && !searchTerm) {
-      setTimeout(() => searchInput.focus(), 100);
-    }
-  }, []);
+    if (searchTerm) return;
+
+    const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement | null;
+    if (!searchInput) return;
+
+    const timer = window.setTimeout(() => searchInput.focus(), 100);
+    return () => window.clearTimeout(timer);
+  }, [searchTerm]);
+
+  const toggleButton = (
+    <button
+      onClick={() => setShowBulkSearch(!showBulkSearch)}
+      className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:border-blue-400 hover:text-blue-600 dark:border-slate-700 dark:text-slate-300 dark:hover:border-blue-400 dark:hover:text-blue-300"
+    >
+      <ArrowLeft className={`h-3.5 w-3.5 transition ${showBulkSearch ? 'rotate-180 opacity-70' : 'opacity-0'}`} />
+      {showBulkSearch ? 'Single search' : 'Bulk search'}
+    </button>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Header with modern styling */}
-      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 sticky top-0 z-10 shadow-soft">
-        <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Back</span>
-          </Link>
-          <h1 className="text-lg font-semibold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-            Search & Verify
-          </h1>
-          <button
-            onClick={() => setShowBulkSearch(!showBulkSearch)}
-            className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-all ${
-              showBulkSearch 
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
-                : 'text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
-            }`}
-          >
-            {showBulkSearch ? 'Single' : 'Bulk'}
-          </button>
-        </div>
-
-        {/* Search modes with modern design */}
-        <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          {!showBulkSearch ? (
-            /* Single search */
-            <div className="relative">
-              <SearchIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+    <PageLayout
+      title="Search & verify"
+      subtitle={showBulkSearch ? 'Check many tracking numbers at once' : 'Instantly find a scanned parcel'}
+      backTo="/"
+      actions={toggleButton}
+    >
+      <div className="space-y-6 pb-6">
+        {!showBulkSearch ? (
+          <section className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+            <label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Search by tracking number
+            </label>
+            <div className="relative mt-3">
+              <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
               <input
                 type="search"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search tracking numbers..."
-                className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all text-lg"
+                placeholder="Enter a tracking number"
+                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-3 text-base text-slate-900 transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-blue-400"
                 autoComplete="off"
               />
             </div>
-          ) : (
-            /* Bulk search */
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                <ClipboardPaste className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                <label className="font-semibold">Bulk Search & Verify</label>
-              </div>
-              <textarea
-                value={bulkInput}
-                onChange={(e) => setBulkInput(e.target.value)}
-                placeholder="Paste multiple tracking numbers (one per line or comma-separated)&#10;Example:&#10;1Z999AA1234567890&#10;9400111899562123456789&#10;123456789012"
-                rows={5}
-                className="w-full p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all font-mono text-sm"
-              />
-              <button
-                onClick={performBulkSearch}
-                disabled={!bulkInput.trim() || isSearching}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all"
-              >
-                {isSearching ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    Searching...
-                  </>
-                ) : (
-                  <>
-                    <SearchIcon className="w-5 h-5" />
-                    Search {parseBulkInput(bulkInput).length > 0 && `(${parseBulkInput(bulkInput).length} items)`}
-                  </>
-                )}
-              </button>
+            <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              Tip: press <kbd className="rounded border border-slate-200 bg-slate-100 px-1 py-0.5 font-mono text-[11px] dark:border-slate-700 dark:bg-slate-900">/</kbd> to focus this field from anywhere.
+            </p>
+          </section>
+        ) : (
+          <section className="space-y-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300">
+              <ClipboardPaste className="h-4 w-4 text-blue-500" />
+              Bulk search & verify
             </div>
-          )}
-        </div>
-      </div>
+            <textarea
+              value={bulkInput}
+              onChange={(e) => setBulkInput(e.target.value)}
+              rows={5}
+              placeholder="Paste one tracking number per line or separate with commas"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm text-slate-700 transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            />
+            <button
+              onClick={performBulkSearch}
+              disabled={!bulkInput.trim() || isSearching}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-300"
+            >
+              {isSearching ? (
+                <>
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" />
+                  Searching…
+                </>
+              ) : (
+                <>
+                  <SearchIcon className="h-4 w-4" />
+                  Search {parseBulkInput(bulkInput).length > 0 && `(${parseBulkInput(bulkInput).length})`}
+                </>
+              )}
+            </button>
+          </section>
+        )}
 
-      {/* Results */}
-      <div className="p-4">
         {!showBulkSearch ? (
-          /* Single search results */
-          <>
+          <section className="space-y-4">
             {searchTerm.trim() && (
-              <div className="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                {isLoading ? 'Searching...' : `Found ${searchResults.length} results`}
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {isLoading ? 'Searching…' : `Found ${searchResults.length} result${searchResults.length === 1 ? '' : 's'}`}
                 {searchResults.length === 200 && ' (showing first 200)'}
-              </div>
+              </p>
             )}
 
             {searchResults.length > 0 ? (
               <div className="space-y-3">
                 {searchResults.map((scan) => (
-                  <div
+                  <article
                     key={scan.id}
-                    className="bg-white dark:bg-gray-800 rounded-2xl p-5 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all duration-300 animate-fade-in"
+                    className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-blue-300 dark:border-slate-800/70 dark:bg-slate-900/70 dark:hover:border-blue-500/30"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <div 
-                            className="font-mono text-lg font-bold text-gray-900 dark:text-gray-100"
-                            dangerouslySetInnerHTML={{
-                              __html: highlightSearchTerm(scan.tracking, searchTerm)
-                            }}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <div className="flex items-start gap-2">
+                          <div
+                            className="font-mono text-lg font-semibold text-slate-900 dark:text-slate-100"
+                            dangerouslySetInnerHTML={{ __html: highlightSearchTerm(scan.tracking, searchTerm) }}
                           />
                           <button
                             onClick={() => copyToClipboard(scan.tracking)}
-                            className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-blue-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-blue-300"
+                            aria-label="Copy tracking"
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="h-4 w-4" />
                           </button>
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{formatDate(scan.timestamp)}</span>
-                            <span className="text-gray-300 dark:text-gray-600">at</span>
-                            <span>{formatTime(scan.timestamp)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-400">Device:</span>
-                            <span className="font-medium">{scan.deviceName}</span>
-                          </div>
-                        </div>
+                        <ul className="mt-3 space-y-1 text-sm text-slate-500 dark:text-slate-400">
+                          <li>
+                            <span className="font-medium text-slate-600 dark:text-slate-200">{formatDate(scan.timestamp)}</span>
+                            <span className="px-1 text-slate-300 dark:text-slate-600">•</span>
+                            {formatTime(scan.timestamp)}
+                          </li>
+                          <li>
+                            Device: <span className="font-medium text-slate-600 dark:text-slate-200">{scan.deviceName}</span>
+                          </li>
+                        </ul>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {scan.checked ? (
-                          <div className="flex items-center gap-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-3 py-1.5 rounded-full text-sm font-medium">
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>Checked</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-3 py-1.5 rounded-full text-sm">
-                            <Circle className="w-4 h-4" />
-                            <span>Pending</span>
-                          </div>
-                        )}
-                      </div>
+                      <span
+                        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
+                          scan.checked
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
+                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300'
+                        }`}
+                      >
+                        {scan.checked ? <CheckCircle2 className="h-4 w-4" /> : <Circle className="h-4 w-4" />}
+                        {scan.checked ? 'Checked' : 'Pending'}
+                      </span>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             ) : searchTerm.trim() && !isLoading ? (
-              <div className="text-center py-16 animate-fade-in">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
-                  <SearchIcon className="w-10 h-10 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                  No results found
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400">
-                  No tracking numbers match <span className="font-mono font-semibold">"{searchTerm}"</span>
-                </p>
-              </div>
-            ) : !searchTerm.trim() ? (
-              <div className="text-center py-16 animate-fade-in">
-                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mb-4">
-                  <SearchIcon className="w-10 h-10 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                  Search Tracking Numbers
-                </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-4">
-                  Enter a tracking number to search for scanned parcels
-                </p>
-                <div className="text-sm text-gray-400 dark:text-gray-500">
-                  <p className="flex items-center justify-center gap-2">
-                    <span>💡 Quick search:</span>
-                    <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-md font-mono">Ctrl+K</kbd>
-                    <span>or</span>
-                    <kbd className="px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded-md font-mono">/</kbd>
-                  </p>
-                </div>
-              </div>
-            ) : null}
-          </>
+              <EmptySearch message={`No results for "${searchTerm}"`} icon={SearchIcon} />
+            ) : (
+              <EmptySearch message="Search tracking numbers to see history" icon={SearchIcon} />
+            )}
+          </section>
         ) : (
-          /* Bulk search results */
-          <>
+          <section className="space-y-4">
             {bulkResults.length > 0 && (
-              <div className="mb-4">
-                <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                  <div className="text-center p-2 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded">
-                    <div className="font-bold text-lg">
-                      {bulkResults.filter(r => r.found).length}
-                    </div>
-                    <div>Found</div>
-                  </div>
-                  <div className="text-center p-2 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 rounded">
-                    <div className="font-bold text-lg">
-                      {bulkResults.filter(r => !r.found).length}
-                    </div>
-                    <div>Not Found</div>
-                  </div>
-                  <div className="text-center p-2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded">
-                    <div className="font-bold text-lg">
-                      {bulkResults.length}
-                    </div>
-                    <div>Total</div>
-                  </div>
+              <div className="grid grid-cols-3 gap-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 py-3 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-500/10 dark:text-emerald-300">
+                  <p className="text-lg font-bold">{bulkResults.filter((r) => r.found).length}</p>
+                  <p>Found</p>
+                </div>
+                <div className="rounded-xl border border-rose-200 bg-rose-50 py-3 text-rose-700 dark:border-rose-900/40 dark:bg-rose-500/10 dark:text-rose-300">
+                  <p className="text-lg font-bold">{bulkResults.filter((r) => !r.found).length}</p>
+                  <p>Missing</p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 py-3 text-slate-600 dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-slate-300">
+                  <p className="text-lg font-bold">{bulkResults.length}</p>
+                  <p>Total</p>
                 </div>
               </div>
             )}
 
-            {bulkResults.length > 0 && (
+            {bulkResults.length > 0 ? (
               <div className="space-y-3">
                 {bulkResults.map((result, index) => (
-                  <div
-                    key={index}
-                    className={`bg-white dark:bg-gray-800 rounded-lg p-4 border-2 ${
-                      result.found 
-                        ? 'border-green-200 dark:border-green-800' 
-                        : 'border-red-200 dark:border-red-800'
+                  <article
+                    key={`${result.tracking}-${index}`}
+                    className={`rounded-2xl border p-4 shadow-sm transition ${
+                      result.found
+                        ? 'border-emerald-200 bg-white dark:border-emerald-900/40 dark:bg-slate-900/70'
+                        : 'border-rose-200 bg-white dark:border-rose-900/40 dark:bg-slate-900/70'
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="flex-shrink-0 mt-1">
-                        {result.found ? (
-                          <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
-                        ) : (
-                          <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
-                        )}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-mono font-semibold text-lg">
-                            {result.tracking}
-                          </span>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="flex items-center gap-2 font-mono text-base font-semibold text-slate-900 dark:text-slate-100">
+                          {result.tracking}
                           <button
                             onClick={() => copyToClipboard(result.tracking)}
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-blue-600 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-blue-300"
                           >
-                            <Copy className="w-4 h-4" />
+                            <Copy className="h-4 w-4" />
                           </button>
-                        </div>
-                        
-                        {result.found && result.scan && (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            <div className="flex items-center gap-2">
-                              <span>{formatDate(result.scan.timestamp)} at {formatTime(result.scan.timestamp)}</span>
-                              {result.scan.checked && (
-                                <span className="inline-flex items-center gap-1 text-green-600 dark:text-green-400">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  Checked
-                                </span>
-                              )}
-                            </div>
-                            <div>Device: {result.scan.deviceName}</div>
-                          </div>
-                        )}
-                        
+                        </p>
+                        {result.found && result.scan ? (
+                          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            {formatDate(result.scan.timestamp)} · {formatTime(result.scan.timestamp)} · {result.scan.deviceName}
+                          </p>
+                        ) : null}
                         {!result.found && result.suggestions.length > 0 && (
-                          <div className="mt-2">
-                            <div className="flex items-center gap-1 text-orange-600 dark:text-orange-400 text-sm mb-1">
-                              <AlertTriangle className="w-4 h-4" />
-                              <span>Similar tracking numbers found:</span>
-                            </div>
-                            <div className="space-y-1">
-                              {result.suggestions.slice(0, 3).map((suggestion) => (
-                                <div key={suggestion.id} className="text-sm text-gray-600 dark:text-gray-400 ml-5">
-                                  <span className="font-mono">{suggestion.tracking}</span>
-                                  <span className="text-gray-400 dark:text-gray-500 ml-2">
-                                    ({formatDate(suggestion.timestamp)})
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
+                          <div className="mt-3 space-y-1 text-sm text-amber-600 dark:text-amber-300">
+                            <p className="flex items-center gap-2 font-semibold">
+                              <AlertTriangle className="h-4 w-4" /> Similar entries
+                            </p>
+                            {result.suggestions.slice(0, 3).map((suggestion) => (
+                              <p key={suggestion.id} className="pl-6 text-slate-500 dark:text-slate-400">
+                                <span className="font-mono">{suggestion.tracking}</span>
+                                <span className="px-1 text-slate-400">•</span>
+                                {formatDate(suggestion.timestamp)}
+                              </p>
+                            ))}
                           </div>
                         )}
                       </div>
+                      <span
+                        className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-semibold ${
+                          result.found
+                            ? 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
+                            : 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300'
+                        }`}
+                      >
+                        {result.found ? (
+                          <CheckCircle2 className="h-4 w-4" />
+                        ) : (
+                          <XCircle className="h-4 w-4" />
+                        )}
+                        {result.found ? 'Found' : 'Not found'}
+                      </span>
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
+            ) : (
+              <EmptySearch message="Paste tracking numbers above to verify" icon={ClipboardPaste} />
             )}
-          </>
+          </section>
         )}
       </div>
-    </div>
+    </PageLayout>
+  );
+}
+
+function EmptySearch({ message, icon: Icon }: { message: string; icon: typeof SearchIcon }) {
+  return (
+    <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-400">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800">
+        <Icon className="h-7 w-7" />
+      </div>
+      <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">{message}</p>
+    </section>
   );
 }

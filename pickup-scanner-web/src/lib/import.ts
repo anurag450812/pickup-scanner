@@ -1,4 +1,4 @@
-import Papa from 'papaparse';
+import Papa, { type ParseResult } from 'papaparse';
 import type { Scan } from '../db/dexie';
 import { normalizeTracking } from './normalize';
 
@@ -10,7 +10,11 @@ interface ImportedScanData {
   time?: string;
   checked?: string | boolean;
   deviceName?: string;
-  [key: string]: any; // Allow additional fields
+  [key: string]: string | number | boolean | undefined;
+}
+
+function isImportedScanData(value: unknown): value is ImportedScanData {
+  return typeof value === 'object' && value !== null;
 }
 
 // Result of import operation
@@ -97,14 +101,14 @@ export function parseCSV(csvContent: string): Promise<{ result: ImportResult; sc
     const errors: string[] = [];
     const validScans: Omit<Scan, 'id'>[] = [];
 
-    Papa.parse(csvContent, {
+    Papa.parse<ImportedScanData>(csvContent, {
       header: true,
       skipEmptyLines: true,
-      complete: (results) => {
+      complete: (results: ParseResult<ImportedScanData>) => {
         let imported = 0;
         let skipped = 0;
 
-        results.data.forEach((row: any, index: number) => {
+        results.data.forEach((row, index) => {
           const { scan, error } = validateAndNormalizeScan(row, index + 2); // +2 because header is row 1
 
           if (error) {
@@ -119,18 +123,19 @@ export function parseCSV(csvContent: string): Promise<{ result: ImportResult; sc
         const result: ImportResult = {
           success: imported > 0 && errors.length === 0, // success only if no row errors
           imported,
-            skipped,
+          skipped,
           errors,
           totalRows: results.data.length
         };
         resolve({ result, scans: validScans });
       },
-      error: (error: any) => {
+      error: (error: Error) => {
+        const message = error.message || 'Unknown error';
         const result: ImportResult = {
           success: false,
           imported: 0,
           skipped: 0,
-          errors: [`CSV parsing error: ${error.message}`],
+          errors: [`CSV parsing error: ${message}`],
           totalRows: 0
         };
         resolve({ result, scans: [] });
@@ -147,15 +152,23 @@ export function parseJSON(jsonContent: string): { result: ImportResult; scans: O
   const validScans: Omit<Scan, 'id'>[] = [];
 
   try {
-    const data = JSON.parse(jsonContent);
+    const parsedContent = JSON.parse(jsonContent) as unknown;
 
-    // Check if it's our export format
-    let scansArray: any[];
-    if (data.scans && Array.isArray(data.scans)) {
-      scansArray = data.scans;
-    } else if (Array.isArray(data)) {
-      scansArray = data;
-    } else {
+    const extractScansArray = (value: unknown): ImportedScanData[] | null => {
+      if (Array.isArray(value)) {
+        return value.filter(isImportedScanData);
+      }
+      if (isImportedScanData(value)) {
+        const { scans } = value as { scans?: unknown };
+        if (Array.isArray(scans)) {
+          return scans.filter(isImportedScanData);
+        }
+      }
+      return null;
+    };
+
+    const scansArray = extractScansArray(parsedContent);
+    if (!scansArray) {
       return {
         result: {
           success: false,

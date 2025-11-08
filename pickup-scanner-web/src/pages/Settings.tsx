@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { 
-  ArrowLeft, 
-  Moon, 
-  Sun, 
-  Smartphone, 
-  Volume2, 
-  Vibrate, 
+import {
+  Moon,
+  Sun,
+  Smartphone,
+  Volume2,
+  Vibrate,
   Database,
   Trash2,
   AlertTriangle,
   Info,
   Check,
-  X
+  X,
 } from 'lucide-react';
 import { dbUtils } from '../db/dexie';
 import { isCameraSupported, isBarcodeDetectorSupported, vibrate, playBeep } from '../lib/normalize';
+import { PageLayout } from '../components/PageLayout';
 
 interface SettingsProps {
   isDarkMode: boolean;
@@ -127,45 +127,28 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Header with modern styling */}
-      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 sticky top-0 z-10 shadow-soft">
-        <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Back</span>
-          </Link>
-          <h1 className="text-lg font-semibold bg-gradient-to-r from-gray-700 to-gray-900 dark:from-gray-300 dark:to-gray-100 bg-clip-text text-transparent">
-            Settings
-          </h1>
-          <div className="w-12" /> {/* Spacer for centered title */}
-        </div>
-      </div>
-
-      <div className="p-6 space-y-6">
-        {/* Appearance */}
-        <section className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-soft border border-gray-100 dark:border-gray-700">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-gray-100">
-            {isDarkMode ? <Moon className="w-6 h-6 text-blue-600 dark:text-blue-400" /> : <Sun className="w-6 h-6 text-orange-500" />}
+    <PageLayout title="Settings" subtitle="Tailor the scanning experience" backTo="/">
+      <div className="space-y-6 pb-6">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            {isDarkMode ? <Moon className="h-5 w-5 text-blue-500" /> : <Sun className="h-5 w-5 text-amber-500" />}
             Appearance
           </h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+          <div className="mt-5 space-y-3">
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-200 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500/30">
               <div>
-                <div className="font-semibold text-gray-900 dark:text-gray-100">Dark Mode</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Use dark theme for better low-light viewing
-                </div>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">Dark theme</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Ideal for low light and AMOLED displays.</p>
               </div>
               <button
                 onClick={toggleDarkMode}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
-                  isDarkMode ? 'bg-gradient-to-r from-blue-600 to-purple-600' : 'bg-gray-300 dark:bg-gray-600'
-                } shadow-inner`}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition ${
+                  isDarkMode ? 'bg-blue-600' : 'bg-slate-300'
+                }`}
+                aria-label="Toggle dark mode"
               >
                 <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 shadow-lg ${
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${
                     isDarkMode ? 'translate-x-7' : 'translate-x-1'
                   }`}
                 />
@@ -174,31 +157,25 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
           </div>
         </section>
 
-        {/* Device Settings */}
-        <section className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-soft border border-gray-100 dark:border-gray-700">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-gray-100">
-            <Smartphone className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            Device Settings
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <Smartphone className="h-5 w-5 text-blue-500" /> Device
           </h2>
-          
-          <div className="space-y-4">
-            {/* Device Name */}
+          <div className="mt-5 space-y-4">
             <div>
-              <label className="block font-semibold mb-2 text-gray-900 dark:text-gray-100">Device Name</label>
-              <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                This name will be saved with each scan for identification
-              </div>
-              <div className="flex gap-2">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Device name</label>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Stored with each scan to identify the source.</p>
+              <div className="mt-3 flex gap-2">
                 <input
                   type="text"
                   value={deviceName}
                   onChange={(e) => setDeviceName(e.target.value)}
-                  placeholder="Enter device name"
-                  className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+                  className="flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                  placeholder="e.g. Front Desk iPad"
                 />
                 <button
                   onClick={() => saveDeviceName(deviceName)}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                  className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
                 >
                   Save
                 </button>
@@ -210,155 +187,96 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
                     setDeviceName(name);
                     saveDeviceName(name);
                   }}
-                  className="mt-3 text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline transition-colors"
+                  className="mt-2 text-sm font-semibold text-blue-600 transition hover:text-blue-500 dark:text-blue-300"
                 >
-                  ✨ Generate automatic name
+                  Generate a friendly name
                 </button>
               )}
             </div>
           </div>
         </section>
 
-        {/* Scan Preferences */}
-        <section className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-soft border border-gray-100 dark:border-gray-700">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-gray-100">
-            <Volume2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            Scan Feedback
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <Volume2 className="h-5 w-5 text-blue-500" /> Scan feedback
           </h2>
-          
-          <div className="space-y-3">
-            {/* Beep on scan */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Volume2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900 dark:text-gray-100">Beep on Scan</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Play sound when barcode is detected
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => savePreference('beepOnScan', !beepOnScan)}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
-                  beepOnScan ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gray-300 dark:bg-gray-600'
-                } shadow-inner`}
-              >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 shadow-lg ${
-                    beepOnScan ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Vibrate on scan */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <Vibrate className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div>
-                  <div className="font-semibold text-gray-900 dark:text-gray-100">Vibrate on Scan</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Vibrate when barcode is detected
-                    {!deviceInfo?.hasVibration && <span className="text-orange-500"> (Not supported)</span>}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => savePreference('vibrateOnScan', !vibrateOnScan)}
-                disabled={!deviceInfo?.hasVibration}
-                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
-                  vibrateOnScan && deviceInfo?.hasVibration ? 'bg-gradient-to-r from-purple-500 to-purple-600' : 'bg-gray-300 dark:bg-gray-600'
-                } ${!deviceInfo?.hasVibration ? 'opacity-50 cursor-not-allowed' : ''} shadow-inner`}
-              >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 shadow-lg ${
-                    vibrateOnScan && deviceInfo?.hasVibration ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-            </div>
+          <div className="mt-5 space-y-3">
+            <PreferenceToggle
+              title="Beep when a barcode is captured"
+              description="Audio confirmation helps in busy environments."
+              icon={<Volume2 className="h-5 w-5 text-blue-500" />}
+              enabled={beepOnScan}
+              onToggle={() => savePreference('beepOnScan', !beepOnScan)}
+            />
+            <PreferenceToggle
+              title="Vibrate on scan"
+              description={
+                deviceInfo?.hasVibration
+                  ? 'Useful when sound is muted or noisy.'
+                  : 'Vibration is not available on this device.'
+              }
+              icon={<Vibrate className="h-5 w-5 text-purple-500" />}
+              enabled={vibrateOnScan && !!deviceInfo?.hasVibration}
+              onToggle={() => savePreference('vibrateOnScan', !vibrateOnScan)}
+              disabled={!deviceInfo?.hasVibration}
+            />
           </div>
         </section>
 
-        {/* Database Management */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Database className="w-5 h-5" />
-            Database
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <Database className="h-5 w-5 text-slate-500" /> Storage
           </h2>
-          
-          <div className="space-y-4">
-            {/* Storage usage */}
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-              <h3 className="font-medium mb-2">Storage Usage</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="mt-5 space-y-4 text-sm text-slate-600 dark:text-slate-400">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">Usage</h3>
+              <div className="mt-3 grid grid-cols-2 gap-4">
                 <div>
-                  <div className="text-gray-500 dark:text-gray-400">Scans</div>
-                  <div className="font-mono font-bold">{dbStats?.scans || 0}</div>
+                  <p className="text-xs text-slate-400">Scans</p>
+                  <p className="font-mono text-lg font-semibold text-slate-800 dark:text-slate-100">{dbStats?.scans ?? 0}</p>
                 </div>
                 <div>
-                  <div className="text-gray-500 dark:text-gray-400">Logs</div>
-                  <div className="font-mono font-bold">{dbStats?.logs || 0}</div>
+                  <p className="text-xs text-slate-400">Logs</p>
+                  <p className="font-mono text-lg font-semibold text-slate-800 dark:text-slate-100">{dbStats?.logs ?? 0}</p>
                 </div>
               </div>
             </div>
 
-            {/* Clear database */}
-            <div className="border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-4 text-rose-700 dark:border-rose-900/40 dark:bg-rose-500/10 dark:text-rose-200">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                <AlertTriangle className="h-5 w-5" />
                 <div className="flex-1">
-                  <h3 className="font-medium text-red-800 dark:text-red-200 mb-1">
-                    Clear All Data
-                  </h3>
-                  <p className="text-sm text-red-700 dark:text-red-300 mb-3">
-                    This will permanently delete all scanned data and cannot be undone. 
-                    Consider exporting your data first.
-                  </p>
-                  
+                  <p className="font-semibold">Clear all local data</p>
+                  <p className="mt-1">Deletes every scan stored on this device. Export first if you want a backup.</p>
                   {!showDeleteConfirm ? (
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
+                      className="mt-3 inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-500"
                     >
-                      <Trash2 className="w-4 h-4" />
-                      Clear Database
+                      <Trash2 className="h-4 w-4" /> Clear database
                     </button>
                   ) : (
-                    <div className="space-y-3">
-                      <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                        Are you sure? This action cannot be undone.
-                      </p>
+                    <div className="mt-3 space-y-2">
+                      <p className="text-xs text-rose-500 dark:text-rose-200">This cannot be undone.</p>
                       <div className="flex gap-2">
                         <button
                           onClick={() => clearDatabaseMutation.mutate()}
                           disabled={clearDatabaseMutation.isPending}
-                          className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
+                          className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:bg-rose-300"
                         >
                           {clearDatabaseMutation.isPending ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                              Clearing...
-                            </>
+                            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" />
                           ) : (
-                            <>
-                              <Check className="w-4 h-4" />
-                              Yes, Delete All
-                            </>
+                            <Check className="h-4 w-4" />
                           )}
+                          Confirm
                         </button>
                         <button
                           onClick={() => setShowDeleteConfirm(false)}
                           disabled={clearDatabaseMutation.isPending}
-                          className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-semibold flex items-center gap-2"
+                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 dark:border-slate-700 dark:text-slate-300"
                         >
-                          <X className="w-4 h-4" />
-                          Cancel
+                          <X className="h-4 w-4" /> Cancel
                         </button>
                       </div>
                     </div>
@@ -369,63 +287,81 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
           </div>
         </section>
 
-        {/* Device Info */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Info className="w-5 h-5" />
-            Device Information
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <Info className="h-5 w-5 text-slate-500" /> Device information
           </h2>
-          
-          <div className="space-y-3 text-sm">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-gray-500 dark:text-gray-400">Camera Support</div>
-                <div className={`font-medium ${deviceInfo?.hasCamera ? 'text-green-600' : 'text-red-600'}`}>
-                  {deviceInfo?.hasCamera ? 'Available' : 'Not Available'}
-                </div>
-              </div>
-              <div>
-                <div className="text-gray-500 dark:text-gray-400">Barcode API</div>
-                <div className={`font-medium ${deviceInfo?.hasBarcodeDetector ? 'text-green-600' : 'text-orange-600'}`}>
-                  {deviceInfo?.hasBarcodeDetector ? 'Native' : 'Fallback (ZXing)'}
-                </div>
-              </div>
-              <div>
-                <div className="text-gray-500 dark:text-gray-400">Vibration</div>
-                <div className={`font-medium ${deviceInfo?.hasVibration ? 'text-green-600' : 'text-red-600'}`}>
-                  {deviceInfo?.hasVibration ? 'Supported' : 'Not Supported'}
-                </div>
-              </div>
-              <div>
-                <div className="text-gray-500 dark:text-gray-400">Audio</div>
-                <div className={`font-medium ${deviceInfo?.hasWebAudio ? 'text-green-600' : 'text-red-600'}`}>
-                  {deviceInfo?.hasWebAudio ? 'Supported' : 'Not Supported'}
-                </div>
-              </div>
-              <div>
-                <div className="text-gray-500 dark:text-gray-400">Connection</div>
-                <div className={`font-medium ${deviceInfo?.isOnline ? 'text-green-600' : 'text-red-600'}`}>
-                  {deviceInfo?.isOnline ? 'Online' : 'Offline'}
-                </div>
-              </div>
-              <div>
-                <div className="text-gray-500 dark:text-gray-400">PWA Mode</div>
-                <div className={`font-medium ${deviceInfo?.isPWA ? 'text-green-600' : 'text-orange-600'}`}>
-                  {deviceInfo?.isPWA ? 'Installed' : 'Browser'}
-                </div>
-              </div>
-            </div>
+          <div className="mt-5 grid grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-400">
+            <InfoRow label="Camera" value={deviceInfo?.hasCamera ? 'Available' : 'Unavailable'} tone={deviceInfo?.hasCamera ? 'positive' : 'negative'} />
+            <InfoRow label="Barcode API" value={deviceInfo?.hasBarcodeDetector ? 'Native' : 'Fallback'} tone={deviceInfo?.hasBarcodeDetector ? 'positive' : 'warning'} />
+            <InfoRow label="Vibration" value={deviceInfo?.hasVibration ? 'Supported' : 'Not supported'} tone={deviceInfo?.hasVibration ? 'positive' : 'negative'} />
+            <InfoRow label="Audio" value={deviceInfo?.hasWebAudio ? 'Supported' : 'Not supported'} tone={deviceInfo?.hasWebAudio ? 'positive' : 'negative'} />
+            <InfoRow label="Connection" value={deviceInfo?.isOnline ? 'Online' : 'Offline'} tone={deviceInfo?.isOnline ? 'positive' : 'negative'} />
+            <InfoRow label="Install mode" value={deviceInfo?.isPWA ? 'PWA' : 'Browser'} tone={deviceInfo?.isPWA ? 'positive' : 'warning'} />
           </div>
         </section>
 
-        {/* App Info */}
-        <section className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 text-center">
-          <h3 className="font-semibold mb-2">Pickup Scanner PWA</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Version 1.0.0 • Built with React + Vite + Dexie
-          </p>
+        <section className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-sm text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+          <p className="font-semibold text-slate-700 dark:text-slate-200">Pickup Scanner PWA</p>
+          <p className="mt-1">Version 1.0.0 · React · Vite · Dexie</p>
         </section>
       </div>
+    </PageLayout>
+  );
+}
+
+interface PreferenceToggleProps {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  enabled: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+}
+
+function PreferenceToggle({ title, description, icon, enabled, onToggle, disabled }: PreferenceToggleProps) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-4 transition hover:border-blue-200 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500/30">
+      <div className="flex items-center gap-3">
+        <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+          {icon}
+        </span>
+        <div>
+          <p className="font-semibold text-slate-900 dark:text-slate-100">{title}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400">{description}</p>
+        </div>
+      </div>
+      <button
+        onClick={onToggle}
+        disabled={disabled}
+        className={`relative inline-flex h-8 w-14 items-center rounded-full transition ${
+          enabled ? 'bg-blue-600' : 'bg-slate-300'
+        } ${disabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+        aria-label={`Toggle ${title}`}
+      >
+        <span
+          className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${
+            enabled ? 'translate-x-7' : 'translate-x-1'
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
+type InfoTone = 'positive' | 'negative' | 'warning';
+
+function InfoRow({ label, value, tone }: { label: string; value: string | undefined; tone: InfoTone }) {
+  const toneClasses: Record<InfoTone, string> = {
+    positive: 'text-emerald-600 dark:text-emerald-300',
+    negative: 'text-rose-600 dark:text-rose-300',
+    warning: 'text-amber-600 dark:text-amber-300',
+  };
+
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wide text-slate-400">{label}</p>
+      <p className={`mt-1 text-sm font-semibold ${toneClasses[tone]}`}>{value ?? 'Unknown'}</p>
     </div>
   );
 }

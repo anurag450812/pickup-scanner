@@ -1,22 +1,21 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { 
-  ArrowLeft, 
-  Download, 
-  Upload, 
-  FileText, 
+import {
+  Download,
+  Upload,
+  FileText,
   Database,
   AlertTriangle,
   CheckCircle,
   X,
   FileDown,
-  FileUp
+  FileUp,
 } from 'lucide-react';
 import { scanOperations } from '../db/dexie';
 import { exportScansAsCSV, exportScansAsJSON, estimateExportSize } from '../lib/export';
 import { importFromFile, validateImportFile, type ImportResult } from '../lib/import';
+import { PageLayout } from '../components/PageLayout';
 
 export default function ImportExport() {
   const [importFile, setImportFile] = useState<File | null>(null);
@@ -127,241 +126,178 @@ export default function ImportExport() {
   const jsonSize = allScans.length > 0 ? estimateExportSize(allScans, 'json') : { size: 0, formatted: '0 Bytes' };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Header with modern styling */}
-      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 sticky top-0 z-10 shadow-soft">
-        <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Back</span>
-          </Link>
-          <h1 className="text-lg font-semibold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
-            Import / Export
-          </h1>
-          <div className="w-12" /> {/* Spacer for centered title */}
-        </div>
-      </div>
-
-      <div className="p-6 space-y-8">
-        {/* Export Section */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <FileDown className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Export Data</h2>
-          </div>
-          
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 space-y-4 shadow-soft border border-gray-100 dark:border-gray-700">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              Export all <span className="font-semibold text-blue-600 dark:text-blue-400">{allScans.length}</span> scans to backup your data or share with other devices.
+    <PageLayout
+      title="Import & export"
+      subtitle="Keep your data backed up and in sync"
+      backTo="/"
+    >
+      <div className="space-y-8 pb-6">
+        <section className="space-y-5 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+          <header className="flex items-center gap-3">
+            <FileDown className="h-5 w-5 text-blue-500" />
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Export data</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {allScans.length} scans ready to download.
+              </p>
             </div>
+          </header>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {/* CSV Export */}
-              <div className="border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-6 hover:border-green-300 dark:hover:border-green-600 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <FileText className="w-6 h-6 text-green-600 dark:text-green-400" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">CSV Format</h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <article className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-emerald-300 dark:border-slate-800/70 dark:bg-slate-900/70 dark:hover:border-emerald-500/30">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300">
+                  <FileText className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">CSV format</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Perfect for spreadsheets</p>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  Compatible with Excel and other spreadsheet applications
-                </p>
-                <div className="text-xs text-gray-500 dark:text-gray-500 mb-4 font-mono">
-                  Estimated size: {csvSize.formatted}
-                </div>
-                <button
-                  onClick={handleExportCSV}
-                  disabled={allScans.length === 0}
-                  className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 w-full justify-center shadow-lg hover:shadow-xl transition-all"
-                >
-                  <Download className="w-5 h-5" />
-                  Export CSV
-                </button>
               </div>
+              <p className="mt-4 text-xs font-mono text-slate-500 dark:text-slate-400">Estimated size · {csvSize.formatted}</p>
+              <button
+                onClick={handleExportCSV}
+                disabled={allScans.length === 0}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-emerald-300"
+              >
+                <Download className="h-4 w-4" /> Export CSV
+              </button>
+            </article>
 
-              {/* JSON Export */}
-              <div className="border-2 border-gray-200 dark:border-gray-700 rounded-2xl p-6 hover:border-blue-300 dark:hover:border-blue-600 hover:shadow-lg transition-all">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Database className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">JSON Format</h3>
+            <article className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-blue-300 dark:border-slate-800/70 dark:bg-slate-900/70 dark:hover:border-blue-500/30">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 dark:text-blue-300">
+                  <Database className="h-5 w-5" />
+                </span>
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">JSON format</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Full fidelity backup</p>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  Complete data export with metadata for full restore
-                </p>
-                <div className="text-xs text-gray-500 dark:text-gray-500 mb-4 font-mono">
-                  Estimated size: {jsonSize.formatted}
-                </div>
-                <button
-                  onClick={handleExportJSON}
-                  disabled={allScans.length === 0}
-                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-semibold flex items-center gap-2 w-full justify-center shadow-lg hover:shadow-xl transition-all"
-                >
-                  <Download className="w-5 h-5" />
-                  Export JSON
-                </button>
               </div>
-            </div>
+              <p className="mt-4 text-xs font-mono text-slate-500 dark:text-slate-400">Estimated size · {jsonSize.formatted}</p>
+              <button
+                onClick={handleExportJSON}
+                disabled={allScans.length === 0}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-300"
+              >
+                <Download className="h-4 w-4" /> Export JSON
+              </button>
+            </article>
           </div>
         </section>
 
-        {/* Import Section */}
-        <section>
-          <div className="flex items-center gap-2 mb-4">
-            <FileUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Import Data</h2>
-          </div>
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+          <header className="flex items-center gap-3">
+            <FileUp className="h-5 w-5 text-purple-500" />
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Import data</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">Merge exported scans into this device.</p>
+            </div>
+          </header>
 
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-soft border border-gray-100 dark:border-gray-700">
+          <div className="mt-5">
             {!importFile ? (
-              /* File selection */
               <div className="text-center">
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".csv,.json"
-                    onChange={handleFileSelect}
-                    className="hidden"
-                  />
-                  <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-12 hover:border-purple-500 dark:hover:border-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all">
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full mb-4">
-                      <Upload className="w-10 h-10 text-white" />
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-                      Choose file to import
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      Select a CSV or JSON file exported from this app
-                    </p>
-                    <div className="inline-flex bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-8 py-3 rounded-xl font-semibold items-center gap-2 shadow-lg hover:shadow-xl transition-all">
-                      <Upload className="w-5 h-5" />
-                      Browse Files
-                    </div>
+                <label className="block cursor-pointer">
+                  <input type="file" accept=".csv,.json" onChange={handleFileSelect} className="hidden" />
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 transition hover:border-purple-400 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-purple-500">
+                    <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-purple-500/10 text-purple-500">
+                      <Upload className="h-8 w-8" />
+                    </span>
+                    <h3 className="mt-4 text-base font-semibold text-slate-900 dark:text-slate-100">Select a CSV or JSON file</h3>
+                    <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Files exported from Pickup Scanner work best.</p>
+                    <span className="mt-6 inline-flex items-center gap-2 rounded-xl bg-purple-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-purple-500">
+                      <Upload className="h-4 w-4" /> Browse files
+                    </span>
                   </div>
                 </label>
-                
-                <div className="mt-6 text-sm text-gray-500 dark:text-gray-400 space-y-1">
-                  <p>📁 Supported formats: CSV, JSON</p>
-                  <p>📏 Maximum size: 10MB</p>
-                </div>
+                <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">Supports up to 10MB · CSV or JSON</p>
               </div>
             ) : showImportPreview ? (
-              /* Import preview */
-              <div className="animate-fade-in">
-                <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Import Preview</h3>
-                
-                <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-5 mb-4">
-                  <div className="flex items-center gap-3 mb-2">
-                    <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                    <span className="font-semibold text-gray-900 dark:text-gray-100">{importFile.name}</span>
-                  </div>
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Size: {(importFile.size / 1024).toFixed(1)} KB
+              <div className="space-y-5">
+                <div className="rounded-xl border border-slate-200/80 bg-slate-50 p-4 dark:border-slate-800/70 dark:bg-slate-900/70">
+                  <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+                    <FileText className="h-5 w-5 text-blue-500" />
+                    <span className="font-medium">{importFile.name}</span>
+                    <span className="text-xs text-slate-400">{(importFile.size / 1024).toFixed(1)} KB</span>
                   </div>
                 </div>
 
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-xl p-5 mb-6">
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
-                    <div className="text-sm">
-                      <p className="font-bold text-yellow-800 dark:text-yellow-200 mb-2">
-                        Import will merge data
-                      </p>
-                      <p className="text-yellow-700 dark:text-yellow-300 mb-3">
-                        Duplicate tracking numbers (same number on same day) will be skipped.
-                        All other scans will be added to your existing data.
-                      </p>
-                      <p className="text-yellow-800 dark:text-yellow-200 font-bold">
-                        📊 Potential new scans: {previewScansCount}
-                      </p>
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-500/10 dark:text-amber-200">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-5 w-5" />
+                    <div>
+                      <p className="font-semibold">Duplicates are skipped automatically.</p>
+                      <p className="mt-1">Potential new scans: {previewScansCount}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <button
                     onClick={performImport}
                     disabled={importMutation.isPending}
-                    className="flex-1 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-lg hover:shadow-xl transition-all"
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-purple-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-purple-500 disabled:cursor-not-allowed disabled:bg-purple-300"
                   >
                     {importMutation.isPending ? (
                       <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                        Importing...
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-b-transparent" />
+                        Importing…
                       </>
                     ) : (
                       <>
-                        <Upload className="w-5 h-5" />
-                        Import File
+                        <Upload className="h-4 w-4" /> Import file
                       </>
                     )}
                   </button>
                   <button
                     onClick={clearImport}
-                    className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-semibold transition-all"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:border-slate-600"
                   >
-                    Cancel
+                    <X className="h-4 w-4" /> Cancel
                   </button>
                 </div>
               </div>
             ) : null}
 
-            {/* Import results */}
             {importResults && (
-              <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div className="flex items-center gap-2 mb-3">
+              <div className="mt-6 rounded-2xl border border-slate-200/80 bg-slate-50 p-5 text-sm text-slate-600 dark:border-slate-800/70 dark:bg-slate-900/70 dark:text-slate-300">
+                <div className="flex items-center gap-2 text-base font-semibold">
                   {importResults.success ? (
-                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <CheckCircle className="h-5 w-5 text-emerald-500" />
                   ) : (
-                    <X className="w-5 h-5 text-red-600" />
+                    <X className="h-5 w-5 text-rose-500" />
                   )}
-                  <h3 className="font-semibold">
-                    {importResults.success ? 'Import Completed' : 'Import Failed'}
-                  </h3>
+                  {importResults.success ? 'Import complete' : 'Import failed'}
                 </div>
-                
-                <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                  <div className="text-center">
-                    <div className="font-bold text-green-600 text-lg">
-                      {importResults.imported}
-                    </div>
-                    <div>Imported</div>
+                <dl className="mt-4 grid grid-cols-3 gap-3 text-center">
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-slate-400">Imported</dt>
+                    <dd className="text-lg font-bold text-emerald-600 dark:text-emerald-300">{importResults.imported}</dd>
                   </div>
-                  <div className="text-center">
-                    <div className="font-bold text-yellow-600 text-lg">
-                      {importResults.skipped}
-                    </div>
-                    <div>Skipped</div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-slate-400">Skipped</dt>
+                    <dd className="text-lg font-bold text-amber-600 dark:text-amber-300">{importResults.skipped}</dd>
                   </div>
-                  <div className="text-center">
-                    <div className="font-bold text-gray-600 text-lg">
-                      {importResults.totalRows}
-                    </div>
-                    <div>Total Rows</div>
+                  <div>
+                    <dt className="text-xs uppercase tracking-wide text-slate-400">Total rows</dt>
+                    <dd className="text-lg font-bold text-slate-600 dark:text-slate-200">{importResults.totalRows}</dd>
                   </div>
-                </div>
-
+                </dl>
                 {importResults.errors.length > 0 && (
-                  <div className="space-y-1">
-                    <h4 className="font-medium text-red-600 dark:text-red-400">Errors:</h4>
+                  <div className="mt-4 space-y-1">
+                    <p className="font-semibold text-rose-500 dark:text-rose-300">Errors</p>
                     {importResults.errors.slice(0, 5).map((error, index) => (
-                      <p key={index} className="text-sm text-red-600 dark:text-red-400">
-                        {error}
-                      </p>
+                      <p key={index}>{error}</p>
                     ))}
                     {importResults.errors.length > 5 && (
-                      <p className="text-sm text-gray-500">
-                        ... and {importResults.errors.length - 5} more errors
-                      </p>
+                      <p className="text-xs text-slate-400">…and {importResults.errors.length - 5} more</p>
                     )}
                   </div>
                 )}
-
                 <button
                   onClick={clearImport}
-                  className="mt-4 text-blue-600 dark:text-blue-400 hover:underline"
+                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 transition hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                 >
                   Import another file
                 </button>
@@ -370,25 +306,18 @@ export default function ImportExport() {
           </div>
         </section>
 
-        {/* Data Info */}
-        <section>
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <div className="flex items-start gap-2">
-              <Database className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="text-sm">
-                <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">
-                  Data Format Information
-                </p>
-                <p className="text-blue-700 dark:text-blue-300">
-                  CSV files include: tracking, timestamp, date, time, checked, deviceName<br />
-                  JSON files include the same data plus export metadata and better type safety.
-                  Both formats are compatible for reimporting.
-                </p>
-              </div>
+        <section className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-sm text-blue-700 shadow-sm dark:border-blue-900/40 dark:bg-blue-500/10 dark:text-blue-200">
+          <div className="flex items-start gap-3">
+            <Database className="h-5 w-5" />
+            <div>
+              <p className="font-semibold">Data formats</p>
+              <p className="mt-1">
+                CSV exports include tracking, timestamp, checked state, and device name. JSON exports preserve the same data plus metadata so you can restore exactly what you exported.
+              </p>
             </div>
           </div>
         </section>
       </div>
-    </div>
+    </PageLayout>
   );
 }

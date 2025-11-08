@@ -1,19 +1,18 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { 
-  ArrowLeft, 
-  Trash2, 
-  Check, 
-  X, 
-  CheckCircle2, 
+import { Link } from 'react-router-dom';
+import {
+  Trash2,
+  Check,
+  X,
+  CheckCircle2,
   Circle,
-  MoreVertical,
-  Search
+  Search,
 } from 'lucide-react';
 import { scanOperations } from '../db/dexie';
 import { formatTime, groupByDate } from '../lib/normalize';
+import { PageLayout } from '../components/PageLayout';
 
 export default function List() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -120,203 +119,187 @@ export default function List() {
       queryClient.invalidateQueries({ queryKey: ['allScans'] });
       queryClient.invalidateQueries({ queryKey: ['homeStats'] });
       toast.success(`Marked ${selectedIds.size} scans as ${checked ? 'checked' : 'unchecked'}`);
-    } catch (error) {
+    } catch {
       toast.error('Failed to update scans');
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-gray-500">Loading scans...</div>
-      </div>
+      <PageLayout title="All scans" subtitle="Loading your history" backTo="/">
+        <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400">Loading…</div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Header with modern styling */}
-      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 sticky top-0 z-10 shadow-soft">
-        <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-medium">Back</span>
-          </Link>
-          <h1 className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            All Scans ({filteredScans.length})
-          </h1>
-          <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-            <MoreVertical className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Search and filters with modern design */}
-        <div className="p-4 space-y-3 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-          {/* Search */}
+    <PageLayout
+      title="All scans"
+      subtitle={`${filteredScans.length} visible • ${allScans.length} total`}
+      backTo="/"
+    >
+      <div className="space-y-6 pb-6">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search tracking numbers..."
-              className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
+              placeholder="Search tracking numbers or devices"
+              className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-3 text-sm text-slate-900 transition focus:border-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:focus:border-blue-400"
             />
           </div>
-
-          {/* Filters */}
-          <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2 cursor-pointer group">
+          <div className="mt-4 flex gap-4 text-sm text-slate-500 dark:text-slate-400">
+            <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={showChecked}
                 onChange={(e) => setShowChecked(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Checked</span>
+              <span className="font-medium">Show checked</span>
             </label>
-            <label className="flex items-center gap-2 cursor-pointer group">
+            <label className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={showUnchecked}
                 onChange={(e) => setShowUnchecked(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Unchecked</span>
+              <span className="font-medium">Show pending</span>
             </label>
           </div>
-        </div>
-      </div>
+        </section>
 
-      {/* Selection bar with modern design */}
-      {selectedIds.size > 0 && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 flex items-center justify-between shadow-lg animate-slide-down">
-          <span className="font-semibold">{selectedIds.size} selected</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => toggleSelectedChecked(true)}
-              className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
-            >
-              <CheckCircle2 className="w-4 h-4" />
-              Check
-            </button>
-            <button
-              onClick={() => toggleSelectedChecked(false)}
-              className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
-            >
-              <Circle className="w-4 h-4" />
-              Uncheck
-            </button>
-            <button
-              onClick={() => deleteSelectedMutation.mutate(Array.from(selectedIds))}
-              disabled={deleteSelectedMutation.isPending}
-              className="bg-red-600 hover:bg-red-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
-            <button
-              onClick={clearSelection}
-              className="bg-white/20 hover:bg-white/30 p-2 rounded-lg transition-all hover:scale-105 active:scale-95"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Scan list with modern cards */}
-      <div className="p-4">
-        {filteredScans.length === 0 ? (
-          <div className="text-center py-16 animate-fade-in">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full mb-4">
-              <Search className="w-10 h-10 text-gray-400" />
-            </div>
-            <div className="text-gray-500 dark:text-gray-400 mb-6 text-lg">
-              {searchTerm ? 'No scans match your search' : 'No scans yet'}
-            </div>
-            <Link
-              to="/scan"
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
-            >
-              <Check className="w-5 h-5" />
-              Start Scanning
-            </Link>
-          </div>
-        ) : (
-          <>
-            {/* Select all button */}
-            <div className="mb-4 flex justify-between items-center">
-              <button
-                onClick={selectedIds.size === filteredScans.length ? clearSelection : selectAll}
-                className="text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline transition-colors"
-              >
-                {selectedIds.size === filteredScans.length ? 'Deselect All' : 'Select All'}
-              </button>
-              <div className="text-sm text-gray-500 dark:text-gray-400 font-medium">
-                {filteredScans.length} of {allScans.length} scans
+        {selectedIds.size > 0 && (
+          <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800 shadow-sm dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="font-semibold">{selectedIds.size} selected</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => toggleSelectedChecked(true)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> Check
+                </button>
+                <button
+                  onClick={() => toggleSelectedChecked(false)}
+                  className="inline-flex items-center gap-2 rounded-lg bg-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+                >
+                  <Circle className="h-4 w-4" /> Uncheck
+                </button>
+                <button
+                  onClick={() => deleteSelectedMutation.mutate(Array.from(selectedIds))}
+                  disabled={deleteSelectedMutation.isPending}
+                  className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:bg-red-400"
+                >
+                  <Trash2 className="h-4 w-4" /> Delete
+                </button>
+                <button
+                  onClick={clearSelection}
+                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-blue-700 hover:text-blue-500 dark:text-blue-300"
+                >
+                  <X className="h-4 w-4" /> Clear
+                </button>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Grouped scans with modern design */}
+        {filteredScans.length === 0 ? (
+          <EmptyState searchTerm={searchTerm} />
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
+              <button
+                onClick={selectedIds.size === filteredScans.length ? clearSelection : selectAll}
+                className="font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                {selectedIds.size === filteredScans.length ? 'Deselect all' : 'Select all'}
+              </button>
+              <span>
+                Showing {filteredScans.length} of {allScans.length}
+              </span>
+            </div>
+
             {Object.entries(groupedScans)
               .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
               .map(([date, scans]) => (
-                <div key={date} className="mb-6 animate-fade-in">
-                  <h3 className="text-sm font-bold text-gray-600 dark:text-gray-400 mb-3 sticky top-32 bg-gradient-to-b from-gray-50 to-transparent dark:from-gray-900 dark:to-transparent py-2 backdrop-blur-sm">
-                    {date} <span className="text-gray-400 dark:text-gray-500">({scans.length})</span>
-                  </h3>
+                <section key={date} className="space-y-3">
+                  <header className="text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    {date} • {scans.length}
+                  </header>
                   <div className="space-y-3">
                     {scans.map((scan) => (
-                      <div
+                      <article
                         key={scan.id}
-                        className={`bg-white dark:bg-gray-800 rounded-2xl p-4 border-2 transition-all duration-300 hover:shadow-lg ${
+                        className={`rounded-2xl border p-4 shadow-sm transition hover:border-blue-200 dark:border-slate-800/70 dark:hover:border-blue-500/30 ${
                           selectedIds.has(scan.id!)
-                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-lg scale-[1.02]'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            ? 'border-blue-400 bg-blue-50/70 dark:bg-blue-500/10'
+                            : 'border-slate-200/80 bg-white dark:bg-slate-900/70'
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          {/* Selection checkbox */}
                           <input
                             type="checkbox"
                             checked={selectedIds.has(scan.id!)}
                             onChange={() => toggleSelection(scan.id!)}
-                            className="w-5 h-5 rounded-md border-2 border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-2 cursor-pointer transition-all"
+                            className="h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-600"
                           />
-
-                          {/* Checked status button */}
                           <button
                             onClick={() => toggleCheckedMutation.mutate({ id: scan.id!, checked: scan.checked })}
-                            className={`flex-shrink-0 transition-all duration-200 hover:scale-110 ${
-                              scan.checked 
-                                ? 'text-green-600 dark:text-green-400' 
-                                : 'text-gray-300 dark:text-gray-600 hover:text-gray-400 dark:hover:text-gray-500'
+                            className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                              scan.checked
+                                ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:border-emerald-400/30 dark:bg-emerald-500/20 dark:text-emerald-300'
+                                : 'border-slate-200 bg-slate-100 text-slate-400 hover:text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-500 dark:hover:text-slate-300'
                             }`}
+                            aria-label={scan.checked ? 'Mark as unchecked' : 'Mark as checked'}
                           >
-                            {scan.checked ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" />}
+                            {scan.checked ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />}
                           </button>
-
-                          {/* Tracking info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-mono text-base font-bold truncate text-gray-900 dark:text-gray-100">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-mono text-base font-semibold text-slate-900 dark:text-slate-100">
                               {scan.tracking}
-                            </div>
-                            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2 mt-1">
+                            </p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                               <span className="font-medium">{formatTime(scan.timestamp)}</span>
-                              <span className="text-gray-300 dark:text-gray-600">•</span>
+                              <span className="text-slate-300 dark:text-slate-600">•</span>
                               <span className="truncate">{scan.deviceName}</span>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </article>
                     ))}
                   </div>
-                </div>
+                </section>
               ))}
-          </>
+          </div>
         )}
       </div>
-    </div>
+    </PageLayout>
+  );
+}
+
+function EmptyState({ searchTerm }: { searchTerm: string }) {
+  return (
+    <section className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500 shadow-sm dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-400">
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400 dark:bg-slate-800">
+        <Search className="h-7 w-7" />
+      </div>
+      <h2 className="mt-4 text-lg font-semibold text-slate-900 dark:text-slate-100">
+        {searchTerm ? 'No matches found' : 'No scans yet'}
+      </h2>
+      <p className="mt-2 text-sm">
+        {searchTerm ? 'Try a different keyword or clear the filters.' : 'Start scanning to see items appear here.'}
+      </p>
+      <Link
+        to="/scan"
+        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-500"
+      >
+        <Check className="h-4 w-4" />
+        Open scanner
+      </Link>
+    </section>
   );
 }

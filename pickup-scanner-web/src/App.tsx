@@ -10,6 +10,7 @@ import List from './pages/List';
 import Search from './pages/Search';
 import ImportExport from './pages/ImportExport';
 import Settings from './pages/Settings';
+import { BottomNav } from './components/BottomNav';
 
 // Create React Query client
 const queryClient = new QueryClient({
@@ -64,28 +65,36 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200`}>
+      <div className="min-h-screen bg-slate-100 transition-colors duration-200 dark:bg-slate-950">
         <Router>
-          <div className="max-w-md mx-auto min-h-screen bg-white dark:bg-gray-800 shadow-lg">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/scan" element={<Scan />} />
-              <Route path="/list" element={<List />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/import-export" element={<ImportExport />} />
-              <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
-            </Routes>
-          </div>
+          <AppFrame isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
         </Router>
-        
-        {/* Toast notifications */}
-        <Toaster 
-          position="top-center"
-          richColors
-          theme={isDarkMode ? 'dark' : 'light'}
-        />
+        <Toaster position="top-center" richColors theme={isDarkMode ? 'dark' : 'light'} />
       </div>
     </QueryClientProvider>
+  );
+}
+
+interface AppFrameProps {
+  isDarkMode: boolean;
+  setIsDarkMode: (value: boolean) => void;
+}
+
+function AppFrame({ isDarkMode, setIsDarkMode }: AppFrameProps) {
+  return (
+  <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col overflow-hidden border border-slate-200 bg-white shadow-xl transition-colors dark:border-slate-800 dark:bg-slate-900 sm:rounded-3xl">
+      <div className="flex-1 overflow-y-auto">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/scan" element={<Scan />} />
+          <Route path="/list" element={<List />} />
+          <Route path="/search" element={<Search />} />
+          <Route path="/import-export" element={<ImportExport />} />
+          <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
+        </Routes>
+      </div>
+      <BottomNav />
+    </div>
   );
 }
 

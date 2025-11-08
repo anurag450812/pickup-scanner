@@ -1,196 +1,210 @@
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { 
-  ScanLine, 
-  List, 
-  Search, 
-  Download, 
-  Settings, 
+import {
+  ScanLine,
+  List,
+  Search,
+  Download,
+  Settings,
   Package,
-  Clock
+  Clock,
 } from 'lucide-react';
 import { scanOperations } from '../db/dexie';
 import { formatRelativeTime } from '../lib/normalize';
+import { PageLayout } from '../components/PageLayout';
+
+const quickActions = [
+  {
+    to: '/scan',
+    icon: ScanLine,
+    title: 'Scan parcel',
+    description: 'Open camera or add manually',
+    accent: 'text-blue-600 dark:text-blue-400',
+    badge: 'S',
+  },
+  {
+    to: '/list',
+    icon: List,
+    title: 'View list',
+    description: 'Group, review, and manage scans',
+    accent: 'text-emerald-600 dark:text-emerald-400',
+  },
+  {
+    to: '/search',
+    icon: Search,
+    title: 'Search & verify',
+    description: 'Find matches and confirm parcels',
+    accent: 'text-purple-600 dark:text-purple-400',
+    badge: '/',
+  },
+  {
+    to: '/import-export',
+    icon: Download,
+    title: 'Import / export',
+    description: 'Back up or restore your data',
+    accent: 'text-amber-600 dark:text-amber-400',
+  },
+  {
+    to: '/settings',
+    icon: Settings,
+    title: 'Preferences',
+    description: 'Device, theme, and feedback',
+    accent: 'text-slate-600 dark:text-slate-300',
+  },
+];
 
 export default function Home() {
-  // Get recent stats
   const { data: stats } = useQuery({
     queryKey: ['homeStats'],
     queryFn: async () => {
       const [totalScans, latestScan, recentScans] = await Promise.all([
         scanOperations.getScansCount(),
         scanOperations.getLatestScan(),
-        scanOperations.getAllScans()
+        scanOperations.getAllScans(),
       ]);
-      
+
       const today = new Date();
       const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-      const scansToday = recentScans.filter(scan => scan.timestamp >= startOfDay).length;
-      const checkedScans = recentScans.filter(scan => scan.checked).length;
-      
+      const scansToday = recentScans.filter((scan) => scan.timestamp >= startOfDay).length;
+      const checkedScans = recentScans.filter((scan) => scan.checked).length;
+
       return {
         totalScans,
         scansToday,
         checkedScans,
-        latestScan
+        latestScan,
       };
-    }
+    },
   });
 
-  const menuItems = [
-    {
-      to: '/scan',
-      icon: ScanLine,
-      title: 'Scan New',
-      description: 'Scan or add tracking numbers',
-      gradient: 'from-blue-500 via-blue-600 to-indigo-600',
-      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
-      iconColor: 'text-blue-600 dark:text-blue-400',
-      shortcut: 'S'
-    },
-    {
-      to: '/list',
-      icon: List,
-      title: 'List Scans',
-      description: 'View all scanned items',
-      gradient: 'from-green-500 via-green-600 to-emerald-600',
-      iconBg: 'bg-green-100 dark:bg-green-900/30',
-      iconColor: 'text-green-600 dark:text-green-400'
-    },
-    {
-      to: '/search',
-      icon: Search,
-      title: 'Search / Verify',
-      description: 'Find and verify parcels',
-      gradient: 'from-purple-500 via-purple-600 to-violet-600',
-      iconBg: 'bg-purple-100 dark:bg-purple-900/30',
-      iconColor: 'text-purple-600 dark:text-purple-400',
-      shortcut: '/'
-    },
-    {
-      to: '/import-export',
-      icon: Download,
-      title: 'Import/Export',
-      description: 'Backup and restore data',
-      gradient: 'from-orange-500 via-orange-600 to-amber-600',
-      iconBg: 'bg-orange-100 dark:bg-orange-900/30',
-      iconColor: 'text-orange-600 dark:text-orange-400'
-    },
-    {
-      to: '/settings',
-      icon: Settings,
-      title: 'Settings',
-      description: 'App preferences',
-      gradient: 'from-gray-500 via-gray-600 to-slate-600',
-      iconBg: 'bg-gray-100 dark:bg-gray-900/30',
-      iconColor: 'text-gray-600 dark:text-gray-400'
-    }
-  ];
-
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
-      {/* Header with modern gradient */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 opacity-90"></div>
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS1vcGFjaXR5PSIwLjA1IiBzdHJva2Utd2lkdGg9IjEiLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9InVybCgjZ3JpZCkiLz48L3N2Zz4=')] opacity-30"></div>
-        
-        <div className="relative text-white p-6 pb-8">
-          <div className="flex items-center gap-3 mb-6 animate-fade-in">
-            <div className="p-2 bg-white/20 backdrop-blur-sm rounded-2xl">
-              <Package className="w-8 h-8" />
+    <PageLayout title="Pickup Scanner" subtitle="Stay on top of every parcel">
+      <div className="space-y-6 pb-6">
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:bg-blue-400/10 dark:text-blue-300">
+              <Package className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Pickup Scanner</h1>
-              <p className="text-sm text-white/80">Modern parcel tracking</p>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Today&apos;s snapshot</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">How your team has been scanning</p>
             </div>
           </div>
-          
-          {/* Stats Cards */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 hover:bg-white/20 transition-all duration-300 animate-slide-up">
-              <div className="text-3xl font-bold">{stats?.totalScans || 0}</div>
-              <div className="text-xs text-white/80 mt-1">Total</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 hover:bg-white/20 transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-              <div className="text-3xl font-bold">{stats?.scansToday || 0}</div>
-              <div className="text-xs text-white/80 mt-1">Today</div>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 hover:bg-white/20 transition-all duration-300 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-              <div className="text-3xl font-bold">{stats?.checkedScans || 0}</div>
-              <div className="text-xs text-white/80 mt-1">Checked</div>
-            </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            <StatCard label="Total" value={stats?.totalScans ?? 0} tone="default" />
+            <StatCard label="Today" value={stats?.scansToday ?? 0} tone="blue" />
+            <StatCard label="Checked" value={stats?.checkedScans ?? 0} tone="emerald" />
           </div>
-          
-          {/* Latest scan card */}
+
           {stats?.latestScan && (
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 animate-fade-in">
-              <div className="flex items-center gap-2 text-sm font-medium mb-1">
-                <Clock className="w-4 h-4" />
-                <span>Latest Scan</span>
+            <div className="mt-6 flex items-center justify-between rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-3 text-sm dark:border-slate-800/60 dark:bg-slate-900/60">
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Latest scan</p>
+                <p className="font-mono text-base font-semibold text-slate-900 dark:text-slate-100">{stats.latestScan.tracking}</p>
               </div>
-              <div className="font-mono text-sm">{stats.latestScan.tracking}</div>
-              <div className="text-xs text-white/70 mt-1">
-                {formatRelativeTime(stats.latestScan.timestamp)}
+              <div className="inline-flex items-center gap-2 rounded-lg bg-slate-900/5 px-3 py-2 text-xs font-medium text-slate-500 dark:bg-slate-100/5 dark:text-slate-300">
+                <Clock className="h-4 w-4" />
+                <span>{formatRelativeTime(stats.latestScan.timestamp)}</span>
               </div>
             </div>
           )}
-        </div>
-      </div>
+        </section>
 
-      {/* Menu Items with modern cards */}
-      <div className="flex-1 p-6 space-y-3">
-        {menuItems.map((item, index) => {
-          const Icon = item.icon;
-          return (
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Quick actions</h2>
             <Link
-              key={item.to}
-              to={item.to}
-              className="block group animate-slide-up"
-              style={{ animationDelay: `${index * 0.05}s` }}
+              to="/scan"
+              className="text-sm font-medium text-blue-600 transition hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
             >
-              <div className="bg-white dark:bg-gray-800 rounded-2xl p-5 shadow-soft hover:shadow-soft-lg transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 group-active:scale-[0.98]">
-                <div className="flex items-center gap-4">
-                  <div className={`${item.iconBg} p-3 rounded-xl group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className={`w-6 h-6 ${item.iconColor}`} />
-                  </div>
+              Start scanning
+            </Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {quickActions.map(({ to, icon: Icon, title, description, accent, badge }) => (
+              <Link
+                key={to}
+                to={to}
+                className="group rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800/70 dark:bg-slate-900/70 dark:hover:border-slate-700 dark:hover:bg-slate-900/60"
+              >
+                <div className="flex gap-4">
+                  <span
+                    className={`inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 transition group-hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:group-hover:bg-slate-700 ${accent}`}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </span>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {item.title}
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-semibold text-slate-900 transition group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-300">
+                        {title}
                       </h3>
-                      {item.shortcut && (
-                        <span className="px-2 py-0.5 text-xs font-mono bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md">
-                          {item.shortcut}
+                      {badge && (
+                        <span className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[11px] font-mono text-slate-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400">
+                          {badge}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {item.description}
-                    </p>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
                   </div>
-                  <svg className="w-5 h-5 text-gray-400 group-hover:translate-x-1 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
                 </div>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-      {/* Footer with keyboard shortcuts */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 backdrop-blur-sm">
-        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
-          <p className="flex items-center justify-center gap-2 flex-wrap">
-            <span>Shortcuts:</span>
-            <kbd className="px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md font-mono text-gray-700 dark:text-gray-300 shadow-sm">S</kbd>
-            <span>Scan</span>
-            <span className="text-gray-300 dark:text-gray-600">•</span>
-            <kbd className="px-2 py-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md font-mono text-gray-700 dark:text-gray-300 shadow-sm">/</kbd>
-            <span>Search</span>
-          </p>
-        </div>
+        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 text-sm shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-semibold text-slate-900 dark:text-slate-100">Keyboard shortcuts</p>
+              <p className="text-slate-500 dark:text-slate-400">Navigate faster without leaving the scanner.</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <kbd className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-mono dark:border-slate-700 dark:bg-slate-900">S</kbd>
+              <span>Scan</span>
+              <span className="text-slate-300 dark:text-slate-600">•</span>
+              <kbd className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-mono dark:border-slate-700 dark:bg-slate-900">/</kbd>
+              <span>Search</span>
+            </div>
+          </div>
+        </section>
       </div>
+    </PageLayout>
+  );
+}
+
+type StatTone = 'default' | 'blue' | 'emerald';
+
+interface StatCardProps {
+  label: string;
+  value: number;
+  tone?: StatTone;
+}
+
+function StatCard({ label, value, tone = 'default' }: StatCardProps) {
+  const tones: Record<StatTone, { badge: string; value: string }> = {
+    default: {
+      badge: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+      value: 'text-slate-900 dark:text-slate-100',
+    },
+    blue: {
+      badge: 'bg-blue-500/10 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300',
+      value: 'text-blue-600 dark:text-blue-300',
+    },
+    emerald: {
+      badge: 'bg-emerald-500/10 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300',
+      value: 'text-emerald-600 dark:text-emerald-300',
+    },
+  };
+
+  const palette = tones[tone];
+
+  return (
+    <div className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/60">
+      <p className={`inline-flex rounded-md px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${palette.badge}`}>
+        {label}
+      </p>
+      <p className={`mt-2 text-3xl font-semibold ${palette.value}`}>{value}</p>
     </div>
   );
 }

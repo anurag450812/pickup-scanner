@@ -1,3 +1,9 @@
+declare global {
+  interface Window {
+    webkitAudioContext?: typeof AudioContext;
+  }
+}
+
 /**
  * Normalize tracking number by removing spaces and dashes, and converting to uppercase
  */
@@ -100,7 +106,12 @@ export function playBeep(): Promise<boolean> {
   return new Promise((resolve) => {
     try {
       // Create a simple beep using Web Audio API
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const AudioContextConstructor = window.AudioContext ?? window.webkitAudioContext;
+      if (!AudioContextConstructor) {
+        resolve(false);
+        return;
+      }
+      const audioContext = new AudioContextConstructor();
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
       
@@ -131,7 +142,7 @@ export async function isCameraSupported(): Promise<boolean> {
   try {
     const devices = await navigator.mediaDevices.enumerateDevices();
     return devices.some(device => device.kind === 'videoinput');
-  } catch (error) {
+  } catch {
     return false;
   }
 }
@@ -163,7 +174,7 @@ export async function requestCameraPermission(): Promise<boolean> {
 /**
  * Debounce function for search input
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => void>(
   func: T, 
   wait: number
 ): (...args: Parameters<T>) => void {
