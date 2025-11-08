@@ -484,21 +484,21 @@ export default function Scan() {
   }, [loadCameras, stopScanning]);
 
   return (
-    <div className="relative flex h-screen w-full flex-col bg-slate-950 text-slate-100">
+    <div className="relative flex h-screen w-full flex-col bg-black text-white">
       {/* Header */}
-      <header className="relative z-30 flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur">
+      <header className="relative z-30 flex items-center justify-between border-b border-slate-800 bg-black px-4 py-3">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1 text-sm font-semibold text-slate-300 transition hover:border-slate-700 hover:bg-slate-900 hover:text-white"
+          className="inline-flex items-center gap-2 px-2 py-1 text-sm text-slate-300 hover:text-white"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Home
+          <ArrowLeft className="h-5 w-5" />
+          Back
         </Link>
-        <h1 className="text-base font-semibold">Scan parcels</h1>
+        <h1 className="text-base font-semibold">Scan</h1>
         <button
           onClick={() => setShowManualInput(!showManualInput)}
-          className={`inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 transition ${
-            showManualInput ? 'bg-blue-600 text-white' : 'text-slate-300 hover:border-slate-600 hover:text-white'
+          className={`inline-flex h-9 w-9 items-center justify-center ${
+            showManualInput ? 'text-blue-400' : 'text-slate-300 hover:text-white'
           }`}
           aria-label="Toggle manual input"
         >
@@ -519,9 +519,9 @@ export default function Scan() {
 
         {/* Start Camera Overlay */}
         {!isScanning && !cameraError && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black">
             <div className="w-full max-w-sm px-6 text-center">
-              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full border-2 border-slate-700 bg-slate-900/80 text-blue-400">
+              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center border-2 border-slate-700 text-blue-400">
                 <Camera className="h-10 w-10" />
               </div>
               <button
@@ -529,16 +529,13 @@ export default function Scan() {
                   console.log('🖱️ Start camera button clicked');
                   startCamera();
                 }}
-                className="w-full rounded-2xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:bg-blue-500 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98] active:bg-blue-700"
+                className="w-full bg-blue-600 px-8 py-4 text-lg font-semibold text-white hover:bg-blue-500"
                 type="button"
               >
-                <span className="flex items-center justify-center gap-3">
-                  <Camera className="h-6 w-6" />
-                  Start Camera
-                </span>
+                Start Camera
               </button>
               <p className="mt-4 text-sm text-slate-400">
-                Allow camera access to begin scanning barcodes
+                Allow camera access to begin scanning
               </p>
             </div>
           </div>
@@ -546,20 +543,20 @@ export default function Scan() {
 
         {/* Error Overlay */}
         {cameraError && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/95 p-6">
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-black p-6">
             <div className="w-full max-w-md text-center">
-              <div className="rounded-3xl border border-rose-500/30 bg-slate-900/80 p-8 backdrop-blur">
-                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/10 text-rose-400">
+              <div className="border border-red-500 bg-slate-900 p-6">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center border border-red-500 text-red-400">
                   <X className="h-8 w-8" />
                 </div>
                 <h3 className="mb-4 text-xl font-semibold text-white">Camera Error</h3>
-                <p className="mb-6 text-sm leading-relaxed text-slate-300">{cameraError}</p>
+                <p className="mb-6 text-sm text-slate-300">{cameraError}</p>
                 <button
                   onClick={() => {
                     console.log('🔄 Try again button clicked');
                     startCamera();
                   }}
-                  className="w-full rounded-2xl bg-blue-600 px-6 py-3 text-lg font-semibold text-white transition-all duration-200 hover:bg-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98] active:bg-blue-700"
+                  className="w-full bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-500"
                   type="button"
                 >
                   Try Again
@@ -574,23 +571,19 @@ export default function Scan() {
           <div className="absolute inset-0 z-10">
             {/* Scanning Frame */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative h-64 w-64 rounded-2xl border-2 border-blue-500/50 bg-blue-500/5 backdrop-blur">
-                <div className="absolute inset-2 rounded-xl border border-white/20" />
+              <div className="relative h-64 w-64 border-2 border-blue-500">
                 {/* Corner indicators */}
-                <div className="absolute left-0 top-0 h-6 w-6 border-l-2 border-t-2 border-blue-400" />
-                <div className="absolute right-0 top-0 h-6 w-6 border-r-2 border-t-2 border-blue-400" />
-                <div className="absolute bottom-0 left-0 h-6 w-6 border-b-2 border-l-2 border-blue-400" />
-                <div className="absolute bottom-0 right-0 h-6 w-6 border-b-2 border-r-2 border-blue-400" />
+                <div className="absolute left-0 top-0 h-6 w-6 border-l-2 border-t-2 border-white" />
+                <div className="absolute right-0 top-0 h-6 w-6 border-r-2 border-t-2 border-white" />
+                <div className="absolute bottom-0 left-0 h-6 w-6 border-b-2 border-l-2 border-white" />
+                <div className="absolute bottom-0 right-0 h-6 w-6 border-b-2 border-r-2 border-white" />
               </div>
             </div>
             
             {/* Instructions */}
             <div className="absolute left-4 right-4 top-8">
-              <div className="mx-auto max-w-sm rounded-2xl border border-white/10 bg-black/60 px-6 py-4 text-center text-white backdrop-blur">
+              <div className="mx-auto max-w-sm border border-white/20 bg-black/80 px-6 py-3 text-center text-white">
                 <p className="text-sm font-semibold">Point camera at barcode</p>
-                <p className="mt-1 text-xs text-slate-300">
-                  {isBarcodeDetectorSupported() ? 'Native detection active' : 'ZXing fallback active'}
-                </p>
               </div>
             </div>
 
@@ -600,32 +593,32 @@ export default function Scan() {
                 <button
                   onClick={toggleFlash}
                   disabled={!hasTorch}
-                  className={`flex h-14 w-14 items-center justify-center rounded-full border-2 transition-all ${
+                  className={`flex h-12 w-12 items-center justify-center border ${
                     !hasTorch 
-                      ? 'border-slate-600 bg-slate-800/50 text-slate-500' 
+                      ? 'border-slate-600 text-slate-500' 
                       : flashOn
-                      ? 'border-yellow-400 bg-yellow-400/20 text-yellow-400 hover:bg-yellow-400/30'
-                      : 'border-slate-400 bg-slate-800/50 text-slate-300 hover:border-white hover:bg-slate-700/50 hover:text-white'
+                      ? 'border-yellow-400 text-yellow-400'
+                      : 'border-white text-white'
                   }`}
                   aria-label={flashOn ? 'Turn flashlight off' : 'Turn flashlight on'}
                 >
-                  {flashOn ? <Flashlight className="h-6 w-6" /> : <FlashlightOff className="h-6 w-6" />}
+                  {flashOn ? <Flashlight className="h-5 w-5" /> : <FlashlightOff className="h-5 w-5" />}
                 </button>
                 
                 <button
                   onClick={switchCamera}
-                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-400 bg-slate-800/50 text-slate-300 transition-all hover:border-white hover:bg-slate-700/50 hover:text-white"
+                  className="flex h-12 w-12 items-center justify-center border border-white text-white"
                   aria-label="Switch camera"
                 >
-                  <RefreshCw className="h-6 w-6" />
+                  <RefreshCw className="h-5 w-5" />
                 </button>
                 
                 <button
                   onClick={stopScanning}
-                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-rose-400 bg-rose-500/20 text-rose-400 transition-all hover:bg-rose-500/30"
+                  className="flex h-12 w-12 items-center justify-center border border-red-400 text-red-400"
                   aria-label="Stop scanning"
                 >
-                  <X className="h-6 w-6" />
+                  <X className="h-5 w-5" />
                 </button>
                 
                 <button
@@ -633,10 +626,10 @@ export default function Scan() {
                     stopScanning();
                     setTimeout(startCamera, 100);
                   }}
-                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-400 bg-slate-800/50 text-slate-300 transition-all hover:border-white hover:bg-slate-700/50 hover:text-white"
+                  className="flex h-12 w-12 items-center justify-center border border-white text-white"
                   aria-label="Restart camera"
                 >
-                  <RotateCcw className="h-6 w-6" />
+                  <RotateCcw className="h-5 w-5" />
                 </button>
               </div>
             </div>
@@ -646,14 +639,13 @@ export default function Scan() {
 
       {/* Super Big Scan Next Button - Bottom */}
       {showScanButton && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent p-4 pb-6">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-black p-4 pb-6">
           <div className="mx-auto max-w-lg">
-            <div className="mb-6 text-center">
-              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/20 text-green-400">
-                <Check className="h-12 w-12" />
+            <div className="mb-4 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center border border-green-500 text-green-400">
+                <Check className="h-8 w-8" />
               </div>
-              <h3 className="text-2xl font-bold text-white">Barcode Scanned!</h3>
-              <p className="mt-2 text-lg text-slate-300">Ready to scan the next item</p>
+              <h3 className="text-xl font-bold text-white">Scanned!</h3>
             </div>
             <button
               onClick={() => {
@@ -661,20 +653,17 @@ export default function Scan() {
                 setShowScanButton(false);
                 startCamera();
               }}
-              className="w-full rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 px-12 py-8 text-3xl font-black text-white shadow-2xl transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:scale-[1.02] hover:shadow-3xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
+              className="w-full bg-blue-600 px-8 py-6 text-2xl font-bold text-white hover:bg-blue-500"
               type="button"
             >
-              <span className="flex items-center justify-center gap-6">
-                <Camera className="h-12 w-12" />
-                SCAN NEXT
-              </span>
+              SCAN NEXT
             </button>
           </div>
         </div>
       )}
 
       {/* Bottom Controls */}
-      <div className="relative z-30 bg-slate-950/95 backdrop-blur" style={{ paddingBottom: '6rem' }}>
+      <div className="relative z-30 bg-black" style={{ paddingBottom: '6rem' }}>
         {/* Manual Input */}
         {showManualInput && (
           <div className="border-t border-slate-800 p-4">
@@ -683,14 +672,14 @@ export default function Scan() {
                 type="text"
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
-                placeholder="Enter tracking number manually"
-                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                placeholder="Enter tracking number"
+                className="w-full border border-slate-700 bg-slate-900 px-4 py-3 text-white placeholder-slate-400"
                 autoFocus
               />
               <button
                 type="submit"
                 disabled={!manualInput.trim() || addScanMutation.isPending}
-                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
+                className="w-full bg-blue-600 py-3 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-400"
               >
                 {addScanMutation.isPending ? 'Adding...' : 'Add Scan'}
               </button>
