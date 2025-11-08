@@ -462,16 +462,20 @@ export default function Scan() {
       </header>
 
       {/* Camera View */}
-      <div className="flex-1 relative">
+      <div className="relative flex-1">
         {!isScanning && !cameraError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-950">
-            <div className="text-center">
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950">
+            <div className="text-center px-6">
               <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-blue-400">
                 <Camera className="h-8 w-8" />
               </div>
               <button
-                onClick={startCamera}
-                className="mx-auto inline-flex w-full max-w-xs items-center justify-center gap-3 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500"
+                onClick={() => {
+                  console.log('🖱️ Start camera button clicked');
+                  startCamera();
+                }}
+                className="mx-auto inline-flex w-full max-w-xs items-center justify-center gap-3 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 active:bg-blue-700"
+                type="button"
               >
                 <Camera className="h-5 w-5" />
                 Start camera
@@ -482,26 +486,33 @@ export default function Scan() {
         )}
 
         {cameraError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-slate-950/95 p-6 text-center">
-            <div className="max-w-sm rounded-2xl border border-rose-500/30 bg-slate-900/70 p-6">
-              <X className="mx-auto h-10 w-10 text-rose-400" />
-              <h3 className="mt-4 text-lg font-semibold">Camera error</h3>
-              <p className="mt-2 text-sm text-slate-400">{cameraError}</p>
-              <button
-                onClick={startCamera}
-                className="mx-auto mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-500"
-              >
-                Try again
-              </button>
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/95 p-6">
+            <div className="w-full max-w-sm text-center">
+              <div className="rounded-2xl border border-rose-500/30 bg-slate-900/70 p-6">
+                <X className="mx-auto h-10 w-10 text-rose-400" />
+                <h3 className="mt-4 text-lg font-semibold text-white">Camera error</h3>
+                <p className="mt-2 text-sm text-slate-400">{cameraError}</p>
+                <button
+                  onClick={() => {
+                    console.log('🔄 Try again button clicked');
+                    startCamera();
+                  }}
+                  className="mx-auto mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 active:bg-blue-700"
+                  type="button"
+                >
+                  Try again
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         <video
           ref={videoRef}
-          className="w-full h-full object-cover"
+          className="h-full w-full object-cover"
           playsInline
           muted
+          style={{ minHeight: '400px' }}
         />
 
         {/* Scanning overlay */}
