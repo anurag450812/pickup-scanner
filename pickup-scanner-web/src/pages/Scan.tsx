@@ -101,11 +101,8 @@ export default function Scan() {
     },
     onError: (error: Error) => {
       if (error.message === 'DUPLICATE') {
-        toast.warning('Duplicate scan for today', {
-          action: {
-            label: 'Add anyway',
-            onClick: () => addDuplicateScan()
-          }
+        toast.warning('⚠️ Already scanned today', {
+          duration: 500 // Very brief duration for duplicate message
         });
       } else {
         toast.error('Failed to save scan');
@@ -123,28 +120,6 @@ export default function Scan() {
         toast.success('Scan undone');
       } catch {
         toast.error('Failed to undo scan');
-      }
-    }
-  };
-
-  // Add duplicate scan
-  const addDuplicateScan = async () => {
-    const tracking = lastAttemptedTrackingRef.current || manualInput || '';
-    if (tracking.trim()) {
-      try {
-        const normalized = normalizeTracking(tracking);
-        const scanId = await scanOperations.addScan({
-          tracking: normalized,
-          timestamp: Date.now(),
-          deviceName: getDeviceName(),
-          checked: false
-        });
-
-        setLastScanId(scanId);
-        queryClient.invalidateQueries({ queryKey: ['homeStats'] });
-        toast.success(`Saved: ${normalized}`);
-      } catch {
-        toast.error('Failed to save scan');
       }
     }
   };
