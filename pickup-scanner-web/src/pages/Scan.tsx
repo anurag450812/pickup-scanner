@@ -151,12 +151,24 @@ export default function Scan() {
 
   // Initialize barcode detector
   const initBarcodeDetector = useCallback(() => {
+    console.log('🔍 Initializing BarcodeDetector...');
+    console.log('📱 isBarcodeDetectorSupported():', isBarcodeDetectorSupported());
+    console.log('📱 window.BarcodeDetector:', !!window.BarcodeDetector);
+    
     if (isBarcodeDetectorSupported() && window.BarcodeDetector) {
-      barcodeDetectorRef.current = new window.BarcodeDetector({
-        formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e']
-      });
-      return true;
+      try {
+        barcodeDetectorRef.current = new window.BarcodeDetector({
+          formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e']
+        });
+        console.log('✅ BarcodeDetector initialized successfully');
+        return true;
+      } catch (error) {
+        console.error('❌ Failed to initialize BarcodeDetector:', error);
+        barcodeDetectorRef.current = null;
+        return false;
+      }
     }
+    console.log('❌ BarcodeDetector not supported, using ZXing fallback');
     barcodeDetectorRef.current = null;
     return false;
   }, []);
@@ -193,8 +205,17 @@ export default function Scan() {
       console.log('✅ Camera permission granted');
 
       const videoConstraints: MediaTrackConstraints = selectedCameraId
-        ? { deviceId: { exact: selectedCameraId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-        : { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } };
+        ? { 
+            deviceId: { exact: selectedCameraId }, 
+            width: { ideal: 1920, min: 640 }, 
+            height: { ideal: 1080, min: 480 },
+            facingMode: 'environment' 
+          }
+        : { 
+            facingMode: 'environment', 
+            width: { ideal: 1920, min: 640 }, 
+            height: { ideal: 1080, min: 480 }
+          };
 
       console.log('📹 Getting user media with constraints:', videoConstraints);
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -224,6 +245,9 @@ export default function Scan() {
         
         // Try BarcodeDetector first, fallback to ZXing
         console.log('🔍 Initializing barcode detection...');
+        console.log('📱 BarcodeDetector supported:', isBarcodeDetectorSupported());
+        console.log('📱 window.BarcodeDetector:', !!window.BarcodeDetector);
+        
         if (initBarcodeDetector()) {
           console.log('✅ Using native BarcodeDetector');
           startBarcodeDetection();
@@ -319,42 +343,59 @@ export default function Scan() {
 
   // Start ZXing detection
   const startZXingDetection = () => {
-    if (!videoRef.current) return;
+    if (!videoRef.current) {
+      console.error('❌ Video element not available for ZXing');
+      return;
+    }
     
     let lastScanTime = 0;
     
     console.log('🎯 Starting ZXing detection');
+    console.log('📹 Video element:', videoRef.current);
+    console.log('📹 Video ready state:', videoRef.current.readyState);
+    console.log('📹 Video dimensions:', videoRef.current.videoWidth, 'x', videoRef.current.videoHeight);
+    
     codeReaderRef.current = new BrowserMultiFormatReader();
+    console.log('📚 ZXing reader created:', codeReaderRef.current);
     
-    // Create a wrapper to handle continuous scanning
-    const handleResult = (result: any) => {
-      console.log('🔍 ZXing detection attempt:', result);
-      if (result && isScanning) {
-        const tracking = result.getText();
-        const now = Date.now();
-        
-        console.log('📊 ZXing data:', tracking, 'Time since last:', now - lastScanTime);
-        
-        if (tracking && now - lastScanTime > 500) { // Prevent rapid duplicate scans
-          lastScanTime = now;
-          console.log('📱 Barcode detected (ZXing):', tracking);
-          setIsPaused(true); // Show pause indicator
-          addScanMutation.mutate(tracking);
-          
-          // Hide pause indicator after delay
-          setTimeout(() => {
-            setIsPaused(false);
-          }, 500); // 0.5 second pause between scans
+    try {
+      console.log('📱 Starting ZXing decodeFromVideoDevice...');
+      codeReaderRef.current.decodeFromVideoDevice(
+        undefined, // Use default camera
+        videoRef.current,
+        (result) => {
+          if (result && isScanning) {
+            try {
+              const tracking = result.getText();
+              const now = Date.now();
+              
+              console.log('📊 ZXing barcode found:', tracking, 'Time since last:', now - lastScanTime);
+              
+              if (tracking && now - lastScanTime > 500) { // Prevent rapid duplicate scans
+                lastScanTime = now;
+                console.log('📱 Barcode accepted (ZXing):', tracking);
+                setIsPaused(true); // Show pause indicator
+                addScanMutation.mutate(tracking);
+                
+                // Hide pause indicator after delay
+                setTimeout(() => {
+                  setIsPaused(false);
+                }, 500); // 0.5 second pause between scans
+              } else if (tracking) {
+                console.log('⏰ Barcode ignored - too soon after last scan');
+              }
+            } catch (err) {
+              console.error('❌ Error processing ZXing result:', err);
+            }
+          }
+          // Note: ZXing automatically continues scanning, no need for manual restart
         }
-      }
-      // Continue scanning - don't stop on errors or after detection
-    };
-    
-    codeReaderRef.current.decodeFromVideoDevice(
-      undefined, // Use default camera
-      videoRef.current,
-      handleResult
-    );
+      );
+      console.log('✅ ZXing decodeFromVideoDevice started');
+    } catch (error) {
+      console.error('❌ Failed to start ZXing detection:', error);
+      setCameraError('Failed to start barcode detection. Please try again.');
+    }
   };
 
   // Stop scanning
