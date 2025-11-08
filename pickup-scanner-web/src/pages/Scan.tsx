@@ -345,16 +345,17 @@ export default function Scan() {
 
   return (
     <div className="flex flex-col min-h-screen bg-black">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 bg-gray-900 text-white">
-        <Link to="/" className="flex items-center gap-2 text-blue-400 hover:text-blue-300">
+      {/* Header with modern styling */}
+      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-900 to-gray-800 text-white border-b border-gray-700 shadow-lg">
+        <Link to="/" className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors">
           <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
+          <span className="font-medium">Back</span>
         </Link>
         <h1 className="text-lg font-semibold">Scan Tracking</h1>
         <button
           onClick={() => setShowManualInput(!showManualInput)}
-          className="text-gray-400 hover:text-white"
+          className={`p-2 rounded-lg transition-colors ${showManualInput ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white hover:bg-gray-700'}`}
+          aria-label="Toggle manual input"
         >
           <Keyboard className="w-5 h-5" />
         </button>
@@ -363,14 +364,20 @@ export default function Scan() {
       {/* Camera View */}
       <div className="flex-1 relative">
         {!isScanning && !cameraError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
-            <button
-              onClick={startCamera}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-full flex items-center gap-3 text-lg font-semibold"
-            >
-              <Camera className="w-6 h-6" />
-              Start Camera
-            </button>
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-b from-gray-900 to-black">
+            <div className="text-center">
+              <div className="mb-6 inline-flex p-6 bg-blue-600/20 rounded-full">
+                <Camera className="w-16 h-16 text-blue-400" />
+              </div>
+              <button
+                onClick={startCamera}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-4 rounded-2xl flex items-center gap-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 mx-auto"
+              >
+                <Camera className="w-6 h-6" />
+                Start Camera
+              </button>
+              <p className="mt-4 text-gray-400 text-sm">Tap to begin scanning barcodes</p>
+            </div>
           </div>
         )}
 

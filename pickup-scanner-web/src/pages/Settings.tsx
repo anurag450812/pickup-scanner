@@ -127,44 +127,46 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white dark:from-gray-900 dark:to-gray-800">
+      {/* Header with modern styling */}
+      <div className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 sticky top-0 z-10 shadow-soft">
         <div className="flex items-center justify-between p-4">
-          <Link to="/" className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+          <Link to="/" className="flex items-center gap-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
             <ArrowLeft className="w-5 h-5" />
-            <span>Back</span>
+            <span className="font-medium">Back</span>
           </Link>
-          <h1 className="text-lg font-semibold">Settings</h1>
+          <h1 className="text-lg font-semibold bg-gradient-to-r from-gray-700 to-gray-900 dark:from-gray-300 dark:to-gray-100 bg-clip-text text-transparent">
+            Settings
+          </h1>
           <div className="w-12" /> {/* Spacer for centered title */}
         </div>
       </div>
 
       <div className="p-6 space-y-6">
         {/* Appearance */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+        <section className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-soft border border-gray-100 dark:border-gray-700">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+            {isDarkMode ? <Moon className="w-6 h-6 text-blue-600 dark:text-blue-400" /> : <Sun className="w-6 h-6 text-orange-500" />}
             Appearance
           </h2>
           
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <div>
-                <div className="font-medium">Dark Mode</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
+                <div className="font-semibold text-gray-900 dark:text-gray-100">Dark Mode</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                   Use dark theme for better low-light viewing
                 </div>
               </div>
               <button
                 onClick={toggleDarkMode}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  isDarkMode ? 'bg-blue-600' : 'bg-gray-200'
-                }`}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
+                  isDarkMode ? 'bg-gradient-to-r from-blue-600 to-purple-600' : 'bg-gray-300 dark:bg-gray-600'
+                } shadow-inner`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    isDarkMode ? 'translate-x-6' : 'translate-x-1'
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 shadow-lg ${
+                    isDarkMode ? 'translate-x-7' : 'translate-x-1'
                   }`}
                 />
               </button>
@@ -173,16 +175,16 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
         </section>
 
         {/* Device Settings */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Smartphone className="w-5 h-5" />
+        <section className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-soft border border-gray-100 dark:border-gray-700">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+            <Smartphone className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             Device Settings
           </h2>
           
           <div className="space-y-4">
             {/* Device Name */}
             <div>
-              <label className="block font-medium mb-2">Device Name</label>
+              <label className="block font-semibold mb-2 text-gray-900 dark:text-gray-100">Device Name</label>
               <div className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                 This name will be saved with each scan for identification
               </div>
@@ -192,11 +194,11 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
                   value={deviceName}
                   onChange={(e) => setDeviceName(e.target.value)}
                   placeholder="Enter device name"
-                  className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex-1 px-4 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all"
                 />
                 <button
                   onClick={() => saveDeviceName(deviceName)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold"
+                  className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
                 >
                   Save
                 </button>
@@ -208,9 +210,9 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
                     setDeviceName(name);
                     saveDeviceName(name);
                   }}
-                  className="mt-2 text-blue-600 dark:text-blue-400 text-sm hover:underline"
+                  className="mt-3 text-blue-600 dark:text-blue-400 text-sm font-medium hover:underline transition-colors"
                 >
-                  Generate automatic name
+                  ✨ Generate automatic name
                 </button>
               )}
             </div>
@@ -218,19 +220,21 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
         </section>
 
         {/* Scan Preferences */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Volume2 className="w-5 h-5" />
+        <section className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-soft border border-gray-100 dark:border-gray-700">
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+            <Volume2 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             Scan Feedback
           </h2>
           
-          <div className="space-y-4">
+          <div className="space-y-3">
             {/* Beep on scan */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <div className="flex items-center gap-3">
-                <Volume2 className="w-5 h-5 text-gray-400" />
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <Volume2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
                 <div>
-                  <div className="font-medium">Beep on Scan</div>
+                  <div className="font-semibold text-gray-900 dark:text-gray-100">Beep on Scan</div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     Play sound when barcode is detected
                   </div>
@@ -238,49 +242,46 @@ export default function Settings({ isDarkMode, setIsDarkMode }: SettingsProps) {
               </div>
               <button
                 onClick={() => savePreference('beepOnScan', !beepOnScan)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  beepOnScan ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-                }`}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
+                  beepOnScan ? 'bg-gradient-to-r from-green-500 to-green-600' : 'bg-gray-300 dark:bg-gray-600'
+                } shadow-inner`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    beepOnScan ? 'translate-x-6' : 'translate-x-1'
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 shadow-lg ${
+                    beepOnScan ? 'translate-x-7' : 'translate-x-1'
                   }`}
                 />
               </button>
             </div>
 
             {/* Vibrate on scan */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
               <div className="flex items-center gap-3">
-                <Vibrate className="w-5 h-5 text-gray-400" />
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <Vibrate className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                </div>
                 <div>
-                  <div className="font-medium">Vibrate on Scan</div>
+                  <div className="font-semibold text-gray-900 dark:text-gray-100">Vibrate on Scan</div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
                     Vibrate when barcode is detected
+                    {!deviceInfo?.hasVibration && <span className="text-orange-500"> (Not supported)</span>}
                   </div>
                 </div>
               </div>
               <button
                 onClick={() => savePreference('vibrateOnScan', !vibrateOnScan)}
                 disabled={!deviceInfo?.hasVibration}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  vibrateOnScan && deviceInfo?.hasVibration ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
-                } ${!deviceInfo?.hasVibration ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-all duration-300 ${
+                  vibrateOnScan && deviceInfo?.hasVibration ? 'bg-gradient-to-r from-purple-500 to-purple-600' : 'bg-gray-300 dark:bg-gray-600'
+                } ${!deviceInfo?.hasVibration ? 'opacity-50 cursor-not-allowed' : ''} shadow-inner`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    vibrateOnScan && deviceInfo?.hasVibration ? 'translate-x-6' : 'translate-x-1'
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform duration-300 shadow-lg ${
+                    vibrateOnScan && deviceInfo?.hasVibration ? 'translate-x-7' : 'translate-x-1'
                   }`}
                 />
               </button>
             </div>
-            
-            {!deviceInfo?.hasVibration && (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Vibration not supported on this device
-              </p>
-            )}
           </div>
         </section>
 
