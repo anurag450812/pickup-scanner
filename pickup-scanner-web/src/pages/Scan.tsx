@@ -440,8 +440,9 @@ export default function Scan() {
   }, [loadCameras, stopScanning]);
 
   return (
-    <div className="flex min-h-screen flex-col bg-slate-950 pb-28 text-slate-100">
-      <header className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+    <div className="relative flex h-screen w-full flex-col bg-slate-950 text-slate-100">
+      {/* Header */}
+      <header className="relative z-30 flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3 backdrop-blur">
         <Link
           to="/"
           className="inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1 text-sm font-semibold text-slate-300 transition hover:border-slate-700 hover:bg-slate-900 hover:text-white"
@@ -461,150 +462,167 @@ export default function Scan() {
         </button>
       </header>
 
-      {/* Camera View */}
-      <div className="relative flex-1">
+      {/* Main Camera Area */}
+      <div className="relative flex-1 overflow-hidden">
+        {/* Video Element */}
+        <video
+          ref={videoRef}
+          className="absolute inset-0 h-full w-full object-cover"
+          playsInline
+          muted
+          style={{ minHeight: '300px' }}
+        />
+
+        {/* Start Camera Overlay */}
         {!isScanning && !cameraError && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950">
-            <div className="text-center px-6">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full border border-slate-700 bg-slate-900/70 text-blue-400">
-                <Camera className="h-8 w-8" />
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950">
+            <div className="w-full max-w-sm px-6 text-center">
+              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full border-2 border-slate-700 bg-slate-900/80 text-blue-400">
+                <Camera className="h-10 w-10" />
               </div>
               <button
                 onClick={() => {
                   console.log('🖱️ Start camera button clicked');
                   startCamera();
                 }}
-                className="mx-auto inline-flex w-full max-w-xs items-center justify-center gap-3 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-950 active:bg-blue-700"
+                className="w-full rounded-2xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:bg-blue-500 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98] active:bg-blue-700"
                 type="button"
               >
-                <Camera className="h-5 w-5" />
-                Start camera
+                <span className="flex items-center justify-center gap-3">
+                  <Camera className="h-6 w-6" />
+                  Start Camera
+                </span>
               </button>
-              <p className="mt-3 text-xs text-slate-400">Allow camera access to begin scanning barcodes.</p>
+              <p className="mt-4 text-sm text-slate-400">
+                Allow camera access to begin scanning barcodes
+              </p>
             </div>
           </div>
         )}
 
+        {/* Error Overlay */}
         {cameraError && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/95 p-6">
-            <div className="w-full max-w-sm text-center">
-              <div className="rounded-2xl border border-rose-500/30 bg-slate-900/70 p-6">
-                <X className="mx-auto h-10 w-10 text-rose-400" />
-                <h3 className="mt-4 text-lg font-semibold text-white">Camera error</h3>
-                <p className="mt-2 text-sm text-slate-400">{cameraError}</p>
+          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/95 p-6">
+            <div className="w-full max-w-md text-center">
+              <div className="rounded-3xl border border-rose-500/30 bg-slate-900/80 p-8 backdrop-blur">
+                <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/10 text-rose-400">
+                  <X className="h-8 w-8" />
+                </div>
+                <h3 className="mb-4 text-xl font-semibold text-white">Camera Error</h3>
+                <p className="mb-6 text-sm leading-relaxed text-slate-300">{cameraError}</p>
                 <button
                   onClick={() => {
                     console.log('🔄 Try again button clicked');
                     startCamera();
                   }}
-                  className="mx-auto mt-4 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-slate-900 active:bg-blue-700"
+                  className="w-full rounded-2xl bg-blue-600 px-6 py-3 text-lg font-semibold text-white transition-all duration-200 hover:bg-blue-500 focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98] active:bg-blue-700"
                   type="button"
                 >
-                  Try again
+                  Try Again
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        <video
-          ref={videoRef}
-          className="h-full w-full object-cover"
-          playsInline
-          muted
-          style={{ minHeight: '400px' }}
-        />
-
-        {/* Scanning overlay */}
+        {/* Scanning UI Overlay */}
         {isScanning && (
-          <div className="absolute inset-0 pointer-events-none">
-            {/* Scanning frame */}
+          <div className="absolute inset-0 z-10">
+            {/* Scanning Frame */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="relative h-64 w-64 rounded-xl border border-blue-500/30">
-                <div className="absolute inset-0 rounded-xl border border-white/10" />
+              <div className="relative h-64 w-64 rounded-2xl border-2 border-blue-500/50 bg-blue-500/5 backdrop-blur">
+                <div className="absolute inset-2 rounded-xl border border-white/20" />
+                {/* Corner indicators */}
+                <div className="absolute left-0 top-0 h-6 w-6 border-l-2 border-t-2 border-blue-400" />
+                <div className="absolute right-0 top-0 h-6 w-6 border-r-2 border-t-2 border-blue-400" />
+                <div className="absolute bottom-0 left-0 h-6 w-6 border-b-2 border-l-2 border-blue-400" />
+                <div className="absolute bottom-0 right-0 h-6 w-6 border-b-2 border-r-2 border-blue-400" />
               </div>
             </div>
             
             {/* Instructions */}
-            <div className="absolute top-4 left-1/2 w-[calc(100%-2rem)] -translate-x-1/2 rounded-full border border-white/10 bg-black/60 px-4 py-1.5 text-center text-xs text-slate-200 backdrop-blur">
-              <p className="font-medium">Point the camera at a barcode</p>
-              <p className="mt-1 text-[10px] uppercase tracking-wide text-slate-400">
-                {isBarcodeDetectorSupported() ? 'Using native detection' : 'Using ZXing fallback'}
-              </p>
+            <div className="absolute left-4 right-4 top-8">
+              <div className="mx-auto max-w-sm rounded-2xl border border-white/10 bg-black/60 px-6 py-4 text-center backdrop-blur">
+                <p className="text-sm font-semibold text-white">Point camera at barcode</p>
+                <p className="mt-1 text-xs text-slate-300">
+                  {isBarcodeDetectorSupported() ? 'Native detection active' : 'ZXing fallback active'}
+                </p>
+              </div>
+            </div>
+
+            {/* Camera Controls */}
+            <div className="absolute bottom-8 left-4 right-4">
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={toggleFlash}
+                  disabled={!hasTorch}
+                  className={`flex h-14 w-14 items-center justify-center rounded-full border-2 transition-all ${
+                    !hasTorch 
+                      ? 'border-slate-600 bg-slate-800/50 text-slate-500' 
+                      : flashOn
+                      ? 'border-yellow-400 bg-yellow-400/20 text-yellow-400 hover:bg-yellow-400/30'
+                      : 'border-slate-400 bg-slate-800/50 text-slate-300 hover:border-white hover:bg-slate-700/50 hover:text-white'
+                  }`}
+                  aria-label={flashOn ? 'Turn flashlight off' : 'Turn flashlight on'}
+                >
+                  {flashOn ? <Flashlight className="h-6 w-6" /> : <FlashlightOff className="h-6 w-6" />}
+                </button>
+                
+                <button
+                  onClick={switchCamera}
+                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-400 bg-slate-800/50 text-slate-300 transition-all hover:border-white hover:bg-slate-700/50 hover:text-white"
+                  aria-label="Switch camera"
+                >
+                  <RefreshCw className="h-6 w-6" />
+                </button>
+                
+                <button
+                  onClick={stopScanning}
+                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-rose-400 bg-rose-500/20 text-rose-400 transition-all hover:bg-rose-500/30"
+                  aria-label="Stop scanning"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+                
+                <button
+                  onClick={() => {
+                    stopScanning();
+                    setTimeout(startCamera, 100);
+                  }}
+                  className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-slate-400 bg-slate-800/50 text-slate-300 transition-all hover:border-white hover:bg-slate-700/50 hover:text-white"
+                  aria-label="Restart camera"
+                >
+                  <RotateCcw className="h-6 w-6" />
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Controls - sticky action bar */}
-  <div className="sticky bottom-24 border-t border-slate-800 bg-slate-950 px-4 py-4">
-        {isScanning && (
-          <>
-          <div className="mb-3 flex justify-center gap-3">
-            <button
-              onClick={toggleFlash}
-              aria-label={flashOn ? 'Turn flashlight off' : 'Turn flashlight on'}
-              className={`inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 transition ${
-                !hasTorch ? 'opacity-40' : 'hover:border-blue-500 hover:text-blue-300'
-              }`}
-              disabled={!hasTorch}
-            >
-              {flashOn ? <Flashlight className="h-5 w-5" /> : <FlashlightOff className="h-5 w-5" />}
-            </button>
-            <button
-              onClick={switchCamera}
-              aria-label="Switch camera"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 transition hover:border-blue-500 hover:text-blue-300"
-            >
-              <RefreshCw className="h-5 w-5" />
-            </button>
-            <button
-              onClick={stopScanning}
-              aria-label="Stop scanning"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-rose-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-rose-500"
-            >
-              Stop
-            </button>
-            <button
-              onClick={() => {
-                stopScanning();
-                setTimeout(startCamera, 100);
-              }}
-              aria-label="Restart camera"
-              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-700 transition hover:border-blue-500 hover:text-blue-300"
-            >
-              <RotateCcw className="h-5 w-5" />
-            </button>
-          </div>
-          {availableCameras.length > 1 && (
-            <div className="text-center text-xs text-slate-500">
-              Camera: {availableCameras.find(d => d.deviceId === selectedCameraId)?.label || 'Default'}
-            </div>
-          )}
-          </>
-        )}
-
+      {/* Bottom Controls */}
+      <div className="relative z-30 bg-slate-950/95 backdrop-blur" style={{ paddingBottom: '6rem' }}>
         {/* Manual Input */}
         {showManualInput && (
-          <form onSubmit={handleManualSubmit} className="mt-4">
-            <div className="flex gap-2">
+          <div className="border-t border-slate-800 p-4">
+            <form onSubmit={handleManualSubmit} className="space-y-3">
               <input
                 type="text"
                 value={manualInput}
                 onChange={(e) => setManualInput(e.target.value)}
                 placeholder="Enter tracking number manually"
-                className="flex-1 rounded-xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+                className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
                 autoFocus
               />
               <button
                 type="submit"
                 disabled={!manualInput.trim() || addScanMutation.isPending}
-                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-slate-700"
+                className="w-full rounded-xl bg-blue-600 py-3 text-sm font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
               >
-                Add
+                {addScanMutation.isPending ? 'Adding...' : 'Add Scan'}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
         )}
       </div>
     </div>
