@@ -28,14 +28,20 @@
   }
 
   * {
-    @apply transition-colors duration-200;
+    transition: color 200ms, background-color 200ms, border-color 200ms;
   }
 
   body {
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
-    @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    background-color: rgb(249 250 251);
+    color: rgb(17 24 39);
+  }
+
+  body.dark {
+    background-color: rgb(17 24 39);
+    color: rgb(243 244 246);
   }
 
   /* Modern scrollbar */
@@ -45,54 +51,43 @@
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-gray-100 dark:bg-gray-800;
+    background-color: rgb(243 244 246);
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    background-color: rgb(31 41 55);
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+    background-color: rgb(209 213 219);
+    border-radius: 9999px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: rgb(75 85 99);
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-gray-400 dark:bg-gray-500;
+    background-color: rgb(156 163 175);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(107 114 128);
   }
 
   /* Focus styles */
   *:focus-visible {
-    @apply outline-none ring-2 ring-blue-500 ring-offset-2 dark:ring-offset-gray-900;
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(59 130 246), 0 0 0 4px rgb(255 255 255);
+  }
+
+  .dark *:focus-visible {
+    box-shadow: 0 0 0 2px rgb(59 130 246), 0 0 0 4px rgb(17 24 39);
   }
 
   /* Selection */
   ::selection {
-    @apply bg-blue-500 text-white;
-  }
-}
-
-@layer utilities {
-  .glass-effect {
-    @apply backdrop-blur-lg bg-white/70 dark:bg-gray-800/70 border border-white/20 dark:border-gray-700/50;
-  }
-
-  .card-hover {
-    @apply transition-all duration-300 hover:shadow-xl hover:-translate-y-1 active:translate-y-0;
-  }
-
-  .smooth-transition {
-    @apply transition-all duration-300 ease-in-out;
-  }
-
-  .gradient-primary {
-    @apply bg-gradient-to-br from-blue-500 to-purple-600;
-  }
-
-  .gradient-success {
-    @apply bg-gradient-to-br from-green-500 to-emerald-600;
-  }
-
-  .gradient-warning {
-    @apply bg-gradient-to-br from-orange-500 to-amber-600;
-  }
-
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600;
+    background-color: rgb(59 130 246);
+    color: white;
   }
 }
