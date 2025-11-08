@@ -41,7 +41,7 @@ export default function Scan() {
   const [flashOn, setFlashOn] = useState(false);
   const [lastScanId, setLastScanId] = useState<number | null>(null);
   const [showManualInput, setShowManualInput] = useState(false);
-  const [showScanButton, setShowScanButton] = useState(false); // Show scan button after successful scan
+  const [showScanButton, setShowScanButton] = useState(false); // State for showing scan next button
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -102,8 +102,11 @@ export default function Scan() {
     },
     onError: (error: Error) => {
       if (error.message === 'DUPLICATE') {
-        toast.warning('⚠️ Already scanned today', {
-          duration: 500 // Very brief duration for duplicate message
+        toast.warning('Duplicate scan for today', {
+          action: {
+            label: 'Add anyway',
+            onClick: () => addDuplicateScan()
+          }
         });
       } else {
         toast.error('Failed to save scan');
@@ -121,6 +124,28 @@ export default function Scan() {
         toast.success('Scan undone');
       } catch {
         toast.error('Failed to undo scan');
+      }
+    }
+  };
+
+  // Add duplicate scan
+  const addDuplicateScan = async () => {
+    const tracking = lastAttemptedTrackingRef.current || manualInput || '';
+    if (tracking.trim()) {
+      try {
+        const normalized = normalizeTracking(tracking);
+        const scanId = await scanOperations.addScan({
+          tracking: normalized,
+          timestamp: Date.now(),
+          deviceName: getDeviceName(),
+          checked: false
+        });
+
+        setLastScanId(scanId);
+        queryClient.invalidateQueries({ queryKey: ['homeStats'] });
+        toast.success(`Saved: ${normalized}`);
+      } catch {
+        toast.error('Failed to save scan');
       }
     }
   };
@@ -571,34 +596,36 @@ export default function Scan() {
             </div>
           </div>
         )}
-
-        {/* Scan Next Button Overlay */}
-        {showScanButton && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-950/90 backdrop-blur">
-            <div className="w-full max-w-sm px-6 text-center">
-              <div className="mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full border-2 border-green-500 bg-green-500/20 text-green-400">
-                <Check className="h-10 w-10" />
-              </div>
-              <h3 className="mb-2 text-xl font-semibold text-white">Barcode Scanned!</h3>
-              <p className="mb-8 text-sm text-slate-300">Ready to scan the next item</p>
-              <button
-                onClick={() => {
-                  console.log('🔄 Scan Next button clicked');
-                  setShowScanButton(false);
-                  startCamera();
-                }}
-                className="w-full rounded-2xl bg-blue-600 px-8 py-4 text-lg font-semibold text-white shadow-lg transition-all duration-200 hover:bg-blue-500 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98] active:bg-blue-700"
-                type="button"
-              >
-                <span className="flex items-center justify-center gap-3">
-                  <Camera className="h-6 w-6" />
-                  Scan Next
-                </span>
-              </button>
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Super Big Scan Next Button - Bottom */}
+      {showScanButton && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent p-6 pb-8">
+          <div className="mx-auto max-w-md">
+            <div className="mb-4 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20 text-green-400">
+                <Check className="h-8 w-8" />
+              </div>
+              <h3 className="text-lg font-semibold text-white">Barcode Scanned!</h3>
+              <p className="text-sm text-slate-400">Ready to scan the next item</p>
+            </div>
+            <button
+              onClick={() => {
+                console.log('🔄 Scan Next button clicked');
+                setShowScanButton(false);
+                startCamera();
+              }}
+              className="w-full rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 px-8 py-6 text-xl font-bold text-white shadow-2xl transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:scale-[1.02] hover:shadow-3xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
+              type="button"
+            >
+              <span className="flex items-center justify-center gap-4">
+                <Camera className="h-8 w-8" />
+                SCAN NEXT
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Controls */}
       <div className="relative z-30 bg-slate-950/95 backdrop-blur" style={{ paddingBottom: '6rem' }}>
