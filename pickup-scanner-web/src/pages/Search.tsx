@@ -33,9 +33,11 @@ export default function Search() {
 
   // Debounced search
   const debouncedSearch = useMemo(
-    () => debounce((term: string) => {
-      setDebouncedTerm(term);
-    }, 150),
+    () =>
+      debounce((...args: unknown[]) => {
+        const [term] = args;
+        setDebouncedTerm(typeof term === 'string' ? term : '');
+      }, 150),
     []
   );
 
