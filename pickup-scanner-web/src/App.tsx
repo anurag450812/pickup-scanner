@@ -8,6 +8,8 @@ import Home from './pages/Home';
 import Scan from './pages/Scan';
 import List from './pages/List';
 import Search from './pages/Search';
+import ImportExport from './pages/ImportExport';
+import Settings from './pages/Settings';
 import { BottomNav } from './components/BottomNav';
 
 // Create React Query client
@@ -21,12 +23,13 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const [isDarkMode] = useState(() => {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved === 'true' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
   });
 
   useEffect(() => {
+    localStorage.setItem('darkMode', isDarkMode.toString());
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -64,7 +67,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen bg-transparent">
         <Router>
-          <AppFrame />
+          <AppFrame isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
         </Router>
         <Toaster position="top-center" richColors theme={isDarkMode ? 'dark' : 'light'} />
       </div>
@@ -72,7 +75,12 @@ function App() {
   );
 }
 
-function AppFrame() {
+interface AppFrameProps {
+  isDarkMode: boolean;
+  setIsDarkMode: (value: boolean) => void;
+}
+
+function AppFrame({ isDarkMode, setIsDarkMode }: AppFrameProps) {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col overflow-hidden border-x border-slate-200 dark:border-slate-800">
       <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
@@ -81,6 +89,8 @@ function AppFrame() {
           <Route path="/scan" element={<Scan />} />
           <Route path="/list" element={<List />} />
           <Route path="/search" element={<Search />} />
+          <Route path="/import-export" element={<ImportExport />} />
+          <Route path="/settings" element={<Settings isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />} />
         </Routes>
       </div>
       <BottomNav />

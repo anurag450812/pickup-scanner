@@ -4,6 +4,8 @@ import {
   ScanLine,
   List,
   Search,
+  Download,
+  Settings,
   Package,
   Clock,
 } from 'lucide-react';
@@ -32,7 +34,18 @@ const quickActions = [
     description: 'Find matches and confirm parcels',
     badge: '/',
   },
-  // Removed import/export and preferences per request
+  {
+    to: '/import-export',
+    icon: Download,
+    title: 'Import / export',
+    description: 'Back up or restore your data',
+  },
+  {
+    to: '/settings',
+    icon: Settings,
+    title: 'Preferences',
+    description: 'Device, theme, and feedback',
+  },
 ];
 
 export default function Home() {

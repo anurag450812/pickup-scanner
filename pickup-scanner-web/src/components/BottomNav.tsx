@@ -1,17 +1,18 @@
 import { NavLink } from 'react-router-dom';
-import { Home, ScanLine, List, Search } from 'lucide-react';
+import { Home, ScanLine, List, Search, Settings } from 'lucide-react';
 
 const navItems = [
   { to: '/', label: 'Home', icon: Home },
   { to: '/scan', label: 'Scan', icon: ScanLine },
   { to: '/list', label: 'List', icon: List },
   { to: '/search', label: 'Search', icon: Search },
+  { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export function BottomNav() {
   return (
     <nav className="border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-5">
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
