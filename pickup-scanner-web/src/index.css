@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     line-height: 1.5;
     font-weight: 400;
     color-scheme: light dark;
@@ -20,24 +20,34 @@
     margin: 0;
     min-width: 320px;
     min-height: 100vh;
-    background-color: rgb(255 255 255);
-    color: rgb(15 23 42);
+    background-color: #f9fafb; /* High-contrast light solid */
+    color: rgb(15 23 42); /* Slate-900 for readability */
   }
 
   body.dark {
-    background-color: rgb(15 23 42);
-    color: rgb(248 250 252);
+    background-color: #0f172a; /* High-contrast dark solid */
+    color: rgb(226 232 240); /* Slate-200 for readability */
   }
 
   /* Focus styles */
   *:focus-visible {
-    outline: 2px solid rgb(59 130 246);
+    outline: 2px solid #2563eb; /* Blue-600 accent */
     outline-offset: 2px;
   }
 
   /* Selection */
   ::selection {
-    background-color: rgb(59 130 246);
-    color: white;
+    background-color: #2563eb;
+    color: #ffffff;
   }
+}
+
+@layer utilities {
+  /* Legacy glass utility removed for clarity & contrast */
+    .glass, .glass-dark {
+      background: transparent;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border: none;
+    }
 }
