@@ -1,15 +1,15 @@
-import { Handler } from '@netlify/functions';
+import type { Context } from '@netlify/functions';
 import { getStore } from '@netlify/blobs';
 
 interface Scan {
-  id?: number;
+  id?: string | number;
   tracking: string;
   timestamp: number;
   deviceName: string;
   checked: boolean;
 }
 
-export const handler: Handler = async (event) => {
+export default async (req: Request, context: Context) => {
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type',
@@ -18,13 +18,18 @@ export const handler: Handler = async (event) => {
   };
 
   // Handle CORS preflight
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
+  if (req.method === 'OPTIONS') {
+    return new Response('', { status: 200, headers });
   }
 
   try {
-    const store = getStore('scans');
-    const method = event.httpMethod;
+    const store = getStore({
+      name: 'scans',
+      consistency: 'strong',
+      siteID: context.site.id,
+    });
+    
+    const method = req.method;
 
     // GET: Retrieve all scans
     if (method === 'GET') {
@@ -41,24 +46,23 @@ export const handler: Handler = async (event) => {
       // Sort by timestamp, newest first
       allScans.sort((a, b) => b.timestamp - a.timestamp);
 
-      return {
-        statusCode: 200,
+      return new Response(JSON.stringify({ scans: allScans }), {
+        status: 200,
         headers,
-        body: JSON.stringify({ scans: allScans }),
-      };
+      });
     }
 
     // POST: Add a new scan
     if (method === 'POST') {
-      if (!event.body) {
-        return {
-          statusCode: 400,
+      const body = await req.text();
+      if (!body) {
+        return new Response(JSON.stringify({ error: 'Missing request body' }), {
+          status: 400,
           headers,
-          body: JSON.stringify({ error: 'Missing request body' }),
-        };
+        });
       }
 
-      const scan: Scan = JSON.parse(event.body);
+      const scan: Scan = JSON.parse(body);
       
       // Generate unique ID using timestamp + random string
       const id = `${scan.timestamp}_${Math.random().toString(36).substr(2, 9)}`;
@@ -67,34 +71,32 @@ export const handler: Handler = async (event) => {
       // Store the scan using the ID as the key
       await store.set(id, JSON.stringify(scanWithId));
 
-      return {
-        statusCode: 201,
+      return new Response(JSON.stringify({ success: true, scan: scanWithId }), {
+        status: 201,
         headers,
-        body: JSON.stringify({ success: true, scan: scanWithId }),
-      };
+      });
     }
 
     // PUT: Update an existing scan (e.g., toggle checked status)
     if (method === 'PUT') {
-      if (!event.body) {
-        return {
-          statusCode: 400,
+      const body = await req.text();
+      if (!body) {
+        return new Response(JSON.stringify({ error: 'Missing request body' }), {
+          status: 400,
           headers,
-          body: JSON.stringify({ error: 'Missing request body' }),
-        };
+        });
       }
 
-      const { id, updates } = JSON.parse(event.body);
+      const { id, updates } = JSON.parse(body);
       
       // Get existing scan
       const existingScan = await store.get(id, { type: 'json' });
       
       if (!existingScan) {
-        return {
-          statusCode: 404,
+        return new Response(JSON.stringify({ error: 'Scan not found' }), {
+          status: 404,
           headers,
-          body: JSON.stringify({ error: 'Scan not found' }),
-        };
+        });
       }
 
       // Merge updates
@@ -103,31 +105,29 @@ export const handler: Handler = async (event) => {
       // Save updated scan
       await store.set(id, JSON.stringify(updatedScan));
 
-      return {
-        statusCode: 200,
+      return new Response(JSON.stringify({ success: true, scan: updatedScan }), {
+        status: 200,
         headers,
-        body: JSON.stringify({ success: true, scan: updatedScan }),
-      };
+      });
     }
 
     // DELETE: Delete scan(s)
     if (method === 'DELETE') {
-      if (!event.body) {
-        return {
-          statusCode: 400,
+      const body = await req.text();
+      if (!body) {
+        return new Response(JSON.stringify({ error: 'Missing request body' }), {
+          status: 400,
           headers,
-          body: JSON.stringify({ error: 'Missing request body' }),
-        };
+        });
       }
 
-      const { ids } = JSON.parse(event.body);
+      const { ids } = JSON.parse(body);
       
       if (!Array.isArray(ids)) {
-        return {
-          statusCode: 400,
+        return new Response(JSON.stringify({ error: 'ids must be an array' }), {
+          status: 400,
           headers,
-          body: JSON.stringify({ error: 'ids must be an array' }),
-        };
+        });
       }
 
       // Delete each scan
@@ -135,27 +135,24 @@ export const handler: Handler = async (event) => {
         await store.delete(id);
       }
 
-      return {
-        statusCode: 200,
+      return new Response(JSON.stringify({ success: true, deleted: ids.length }), {
+        status: 200,
         headers,
-        body: JSON.stringify({ success: true, deleted: ids.length }),
-      };
+      });
     }
 
-    return {
-      statusCode: 405,
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
       headers,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
+    });
   } catch (error) {
     console.error('Function error:', error);
-    return {
-      statusCode: 500,
+    return new Response(JSON.stringify({ 
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }), {
+      status: 500,
       headers,
-      body: JSON.stringify({ 
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error'
-      }),
-    };
+    });
   }
 };
