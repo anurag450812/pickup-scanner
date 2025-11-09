@@ -656,14 +656,14 @@ export default function Scan() {
 
       {/* Super Big Scan Next Button - Bottom */}
       {showScanButton && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent p-4 pb-6">
-          <div className="mx-auto max-w-lg">
-            <div className="mb-6 text-center">
-              <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-green-500/20 text-green-400">
-                <Check className="h-12 w-12" />
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent px-4 pb-safe">
+          <div className="mx-auto max-w-lg pb-8">
+            <div className="mb-4 text-center">
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 text-green-400">
+                <Check className="h-10 w-10" />
               </div>
-              <h3 className="text-2xl font-bold text-white">Barcode Scanned!</h3>
-              <p className="mt-2 text-lg text-slate-300">Ready to scan the next item</p>
+              <h3 className="text-xl font-bold text-white">Barcode Scanned!</h3>
+              <p className="mt-1 text-base text-slate-300">Ready to scan the next item</p>
             </div>
             <button
               onClick={() => {
@@ -671,11 +671,11 @@ export default function Scan() {
                 setShowScanButton(false);
                 startCamera();
               }}
-              className="w-full rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 px-12 py-8 text-3xl font-black text-white shadow-2xl transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:scale-[1.02] hover:shadow-3xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
+              className="w-full rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 px-12 py-7 text-2xl font-black text-white shadow-2xl transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:scale-[1.02] hover:shadow-3xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
               type="button"
             >
-              <span className="flex items-center justify-center gap-6">
-                <Camera className="h-12 w-12" />
+              <span className="flex items-center justify-center gap-4">
+                <Camera className="h-10 w-10" />
                 SCAN NEXT
               </span>
             </button>
