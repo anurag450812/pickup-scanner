@@ -164,7 +164,20 @@ export default function Scan() {
   const initBarcodeDetector = useCallback(() => {
     if (isBarcodeDetectorSupported() && window.BarcodeDetector) {
       barcodeDetectorRef.current = new window.BarcodeDetector({
-        formats: ['code_128', 'code_39', 'ean_13', 'ean_8', 'upc_a', 'upc_e']
+        formats: [
+          'code_128',
+          'code_39', 
+          'code_93',
+          'codabar',
+          'ean_13', 
+          'ean_8', 
+          'itf',
+          'upc_a', 
+          'upc_e',
+          'qr_code',
+          'pdf417',
+          'data_matrix'
+        ]
       });
       return true;
     }
@@ -237,7 +250,7 @@ export default function Scan() {
               console.log('⚠️ No video track found for torch detection');
             }
             
-            // Wait a bit more for video to stabilize, then start detection
+            // Wait longer for video to stabilize for better barcode detection
             setTimeout(() => {
               console.log('🔍 Initializing barcode detection...');
               if (initBarcodeDetector()) {
@@ -247,7 +260,7 @@ export default function Scan() {
                 console.log('📚 Using ZXing fallback');
                 startZXingDetection();
               }
-            }, 500); // 500ms delay to ensure video is stable
+            }, 800); // 800ms delay to ensure video is fully stable
           }
         };
       } else {
@@ -315,8 +328,15 @@ export default function Scan() {
         const barcodes = await detector.detect(videoElement);
         if (barcodes.length > 0) {
           const tracking = barcodes[0]?.rawValue;
-          if (tracking) {
+          if (tracking && tracking.trim()) {
             console.log('📱 Barcode detected:', tracking);
+            
+            // Clear interval immediately to prevent duplicate scans
+            if (scanIntervalRef.current) {
+              clearInterval(scanIntervalRef.current);
+              scanIntervalRef.current = null;
+            }
+            
             addScanMutation.mutate(tracking);
             
             // Stop scanning and show scan button
@@ -330,7 +350,8 @@ export default function Scan() {
       }
     };
 
-    scanIntervalRef.current = window.setInterval(detectBarcodes, 100);
+    // Scan more frequently for better reliability - 50ms = 20 scans per second
+    scanIntervalRef.current = window.setInterval(detectBarcodes, 50);
   };
 
   // Start ZXing detection
@@ -353,38 +374,48 @@ export default function Scan() {
     
     codeReaderRef.current = new BrowserMultiFormatReader();
     
-    // Create a wrapper to handle continuous scanning
-    const handleResult = (result: any) => {
-      if (result && isScanning) {
-        const tracking = result.getText();
-        if (tracking) {
-          console.log('📱 Barcode detected (ZXing):', tracking);
-          addScanMutation.mutate(tracking);
-          
-          // Stop scanning and show scan button
-          stopScanning();
-          setShowScanButton(true);
+    // Use continuous decode for better reliability
+    const scanContinuously = async () => {
+      const reader = codeReaderRef.current;
+      if (!reader || !videoElement || !isScanning) return;
+      
+      try {
+        const result = await reader.decodeOnceFromVideoDevice(undefined, videoElement.id || 'video');
+        
+        if (result && isScanning) {
+          const tracking = result.getText();
+          if (tracking && tracking.trim()) {
+            console.log('📱 Barcode detected (ZXing):', tracking);
+            
+            addScanMutation.mutate(tracking);
+            
+            // Stop scanning and show scan button
+            stopScanning();
+            setShowScanButton(true);
+            return; // Don't continue scanning after success
+          }
+        }
+        
+        // Continue scanning if no result or empty result
+        if (isScanning) {
+          requestAnimationFrame(() => scanContinuously());
+        }
+      } catch (error) {
+        // Continue scanning even on errors (e.g., NotFoundException)
+        if (isScanning) {
+          // Use setTimeout to avoid blocking the main thread
+          setTimeout(() => scanContinuously(), 50);
         }
       }
-      // Continue scanning - don't stop on errors
     };
     
-    // Add error handling for ZXing initialization
-    try {
-      codeReaderRef.current.decodeFromVideoDevice(
-        undefined, // Use default camera
-        videoRef.current,
-        handleResult
-      );
-    } catch (error) {
-      console.error('❌ ZXing initialization failed:', error);
-      // Retry ZXing initialization
-      setTimeout(() => {
-        if (isScanning && videoRef.current) {
-          startZXingDetection();
-        }
-      }, 1000);
+    // Give video element an ID if it doesn't have one
+    if (videoElement && !videoElement.id) {
+      videoElement.id = 'barcode-scanner-video';
     }
+    
+    // Start continuous scanning
+    scanContinuously();
   };
 
   // Stop scanning
