@@ -1,8 +1,10 @@
 import Dexie, { type EntityTable } from 'dexie';
+import { saveScanToNetlify, updateScanOnNetlify, deleteScansFromNetlify } from '../lib/api';
 
 // Define the scan interface
 export interface Scan {
   id?: number;
+  netlifyId?: string; // Store Netlify's ID for syncing
   tracking: string;
   timestamp: number;
   deviceName: string;
@@ -28,11 +30,31 @@ db.version(1).stores({
   logs: '++id, message, ts',
 });
 
+// Migration to add netlifyId field
+db.version(2).stores({
+  scans: '++id, tracking, timestamp, deviceName, checked, netlifyId',
+  logs: '++id, message, ts',
+});
+
 // CRUD operations for scans
 export const scanOperations = {
   // Add a new scan
   async addScan(scan: Omit<Scan, 'id'>): Promise<number> {
+    // Save to local database first
     const id = await db.scans.add(scan);
+    
+    // Then sync to Netlify in the background
+    try {
+      const netlifyResponse = await saveScanToNetlify(scan);
+      // Update local record with Netlify ID
+      if (netlifyResponse.id) {
+        await db.scans.update(id, { netlifyId: String(netlifyResponse.id) });
+      }
+    } catch (error) {
+      console.error('Failed to sync scan to Netlify:', error);
+      // Continue - local save succeeded, Netlify sync can retry later
+    }
+    
     return id as number;
   },
 
@@ -74,12 +96,45 @@ export const scanOperations = {
 
   // Update scan checked status
   async updateScanChecked(id: number, checked: boolean): Promise<number> {
-    return await db.scans.update(id, { checked });
+    const result = await db.scans.update(id, { checked });
+    
+    // Sync to Netlify in the background
+    try {
+      const scan = await db.scans.get(id);
+      if (scan?.netlifyId) {
+        await updateScanOnNetlify(scan.netlifyId, { checked });
+      }
+    } catch (error) {
+      console.error('Failed to sync checked status to Netlify:', error);
+      // Continue - local update succeeded
+    }
+    
+    return result;
   },
 
   // Delete scans by IDs
   async deleteScans(ids: number[]): Promise<void> {
+    // Get netlify IDs before deleting
+    const netlifyIds: string[] = [];
+    for (const id of ids) {
+      const scan = await db.scans.get(id);
+      if (scan?.netlifyId) {
+        netlifyIds.push(scan.netlifyId);
+      }
+    }
+    
+    // Delete from local database
     await db.scans.bulkDelete(ids);
+    
+    // Sync deletions to Netlify in the background
+    if (netlifyIds.length > 0) {
+      try {
+        await deleteScansFromNetlify(netlifyIds);
+      } catch (error) {
+        console.error('Failed to sync deletions to Netlify:', error);
+        // Continue - local deletion succeeded
+      }
+    }
   },
 
   // Get scan by exact tracking number

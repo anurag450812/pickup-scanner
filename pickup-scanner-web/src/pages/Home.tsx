@@ -166,30 +166,6 @@ export default function Home() {
     </PageLayout>
   );
 }
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-slate-200/80 bg-white p-5 text-sm shadow-sm transition-colors dark:border-slate-800/60 dark:bg-slate-900/70">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="font-semibold text-slate-900 dark:text-slate-100">Keyboard shortcuts</p>
-              <p className="text-slate-500 dark:text-slate-400">Navigate faster without leaving the scanner.</p>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <kbd className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-mono dark:border-slate-700 dark:bg-slate-900">S</kbd>
-              <span>Scan</span>
-              <span className="text-slate-300 dark:text-slate-600">•</span>
-              <kbd className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-mono dark:border-slate-700 dark:bg-slate-900">/</kbd>
-              <span>Search</span>
-            </div>
-          </div>
-        </section>
-      </div>
-    </PageLayout>
-  );
-}
 
 type StatTone = 'default' | 'blue' | 'emerald';
 

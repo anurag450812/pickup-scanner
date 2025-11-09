@@ -65,7 +65,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="min-h-screen bg-transparent">
+      <div className="min-h-screen bg-slate-100 transition-colors duration-200 dark:bg-slate-950">
         <Router>
           <AppFrame isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />
         </Router>
@@ -82,8 +82,8 @@ interface AppFrameProps {
 
 function AppFrame({ isDarkMode, setIsDarkMode }: AppFrameProps) {
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col overflow-hidden border-x border-slate-200 dark:border-slate-800">
-      <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
+  <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col overflow-hidden border border-slate-200 bg-white shadow-xl transition-colors dark:border-slate-800 dark:bg-slate-900 sm:rounded-3xl">
+      <div className="flex-1 overflow-y-auto">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/scan" element={<Scan />} />
