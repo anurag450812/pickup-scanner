@@ -15,7 +15,7 @@ import { formatTime, groupByDate } from '../lib/normalize';
 import { PageLayout } from '../components/PageLayout';
 
 export default function List() {
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string | number>>(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [showChecked, setShowChecked] = useState(true);
   const [showUnchecked, setShowUnchecked] = useState(true);
@@ -58,7 +58,7 @@ export default function List() {
 
   // Toggle scan checked status
   const toggleCheckedMutation = useMutation({
-    mutationFn: async ({ id, checked }: { id: number; checked: boolean }) => {
+    mutationFn: async ({ id, checked }: { id: string | number; checked: boolean }) => {
       await scanOperations.updateScanChecked(id, !checked);
     },
     onSuccess: () => {
@@ -72,7 +72,7 @@ export default function List() {
 
   // Delete selected scans
   const deleteSelectedMutation = useMutation({
-    mutationFn: async (ids: number[]) => {
+    mutationFn: async (ids: (string | number)[]) => {
       await scanOperations.deleteScans(ids);
     },
     onSuccess: () => {
@@ -87,7 +87,7 @@ export default function List() {
   });
 
   // Toggle selection
-  const toggleSelection = (id: number) => {
+  const toggleSelection = (id: string | number) => {
     const newSelected = new Set(selectedIds);
     if (newSelected.has(id)) {
       newSelected.delete(id);

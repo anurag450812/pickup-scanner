@@ -39,7 +39,7 @@ export default function Scan() {
   const [manualInput, setManualInput] = useState('');
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [flashOn, setFlashOn] = useState(false);
-  const [lastScanId, setLastScanId] = useState<number | null>(null);
+  const [lastScanId, setLastScanId] = useState<string | null>(null);
   const [showManualInput, setShowManualInput] = useState(false);
   const [showScanButton, setShowScanButton] = useState(false); // State for showing scan next button
   

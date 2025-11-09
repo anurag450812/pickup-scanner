@@ -1,10 +1,8 @@
-import Dexie, { type EntityTable } from 'dexie';
-import { saveScanToNetlify, updateScanOnNetlify, deleteScansFromNetlify } from '../lib/api';
+import { saveScanToNetlify, updateScanOnNetlify, deleteScansFromNetlify, fetchScansFromNetlify } from '../lib/api';
 
 // Define the scan interface
 export interface Scan {
-  id?: number;
-  netlifyId?: string; // Store Netlify's ID for syncing
+  id?: string | number; // Netlify ID (string) or local fallback (number)
   tracking: string;
   timestamp: number;
   deviceName: string;
@@ -18,162 +16,176 @@ export interface Log {
   ts: number;
 }
 
-// Define the database
-const db = new Dexie('pickup_scanner_db') as Dexie & {
-  scans: EntityTable<Scan, 'id'>;
-  logs: EntityTable<Log, 'id'>;
-};
+// NO LOCAL DATABASE - Everything stored in Netlify cloud
 
-// Define schemas
-db.version(1).stores({
-  scans: '++id, tracking, timestamp, deviceName, checked',
-  logs: '++id, message, ts',
-});
-
-// Migration to add netlifyId field
-db.version(2).stores({
-  scans: '++id, tracking, timestamp, deviceName, checked, netlifyId',
-  logs: '++id, message, ts',
-});
-
-// CRUD operations for scans
+// CRUD operations for scans - ALL DATA FROM NETLIFY CLOUD
 export const scanOperations = {
-  // Add a new scan
-  async addScan(scan: Omit<Scan, 'id'>): Promise<number> {
-    // Save to local database first
-    const id = await db.scans.add(scan);
-    
-    // Then sync to Netlify in the background
+  // Add a new scan - DIRECTLY TO NETLIFY
+  async addScan(scan: Omit<Scan, 'id'>): Promise<string> {
     try {
       const netlifyResponse = await saveScanToNetlify(scan);
-      // Update local record with Netlify ID
-      if (netlifyResponse.id) {
-        await db.scans.update(id, { netlifyId: String(netlifyResponse.id) });
-      }
+      return String(netlifyResponse.id);
     } catch (error) {
-      console.error('Failed to sync scan to Netlify:', error);
-      // Continue - local save succeeded, Netlify sync can retry later
+      console.error('Failed to save scan to Netlify:', error);
+      throw error;
     }
-    
-    return id as number;
   },
 
-  // Get all scans, sorted by newest first
+  // Get all scans - FROM NETLIFY
   async getAllScans(): Promise<Scan[]> {
-    return await db.scans.orderBy('timestamp').reverse().toArray();
-  },
-
-  // Get scans for a specific date (timestamp range)
-  async getScansByDate(startOfDay: number, endOfDay: number): Promise<Scan[]> {
-    return await db.scans
-      .where('timestamp')
-      .between(startOfDay, endOfDay)
-      .toArray();
-  },
-
-  // Search scans by tracking number (substring search)
-  async searchScans(term: string, limit: number = 200): Promise<Scan[]> {
-    const normalizedTerm = term.replace(/[\s-]/g, '').toUpperCase();
-    return await db.scans
-      .filter(scan => scan.tracking.includes(normalizedTerm))
-      .reverse()
-      .limit(limit)
-      .toArray();
-  },
-
-  // Check if tracking exists for today
-  async checkDuplicateToday(tracking: string): Promise<Scan | undefined> {
-    const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-    const endOfDay = startOfDay + 24 * 60 * 60 * 1000 - 1;
-    
-    return await db.scans
-      .where('tracking')
-      .equals(tracking)
-      .and(scan => scan.timestamp >= startOfDay && scan.timestamp <= endOfDay)
-      .first();
-  },
-
-  // Update scan checked status
-  async updateScanChecked(id: number, checked: boolean): Promise<number> {
-    const result = await db.scans.update(id, { checked });
-    
-    // Sync to Netlify in the background
     try {
-      const scan = await db.scans.get(id);
-      if (scan?.netlifyId) {
-        await updateScanOnNetlify(scan.netlifyId, { checked });
+      const scans = await fetchScansFromNetlify();
+      // Sort by timestamp, newest first
+      return scans.sort((a, b) => b.timestamp - a.timestamp);
+    } catch (error) {
+      console.error('Failed to fetch scans from Netlify:', error);
+      return [];
+    }
+  },
+
+  // Get scans for a specific date (timestamp range) - FROM NETLIFY
+  async getScansByDate(startOfDay: number, endOfDay: number): Promise<Scan[]> {
+    try {
+      const allScans = await fetchScansFromNetlify();
+      return allScans.filter(
+        scan => scan.timestamp >= startOfDay && scan.timestamp <= endOfDay
+      );
+    } catch (error) {
+      console.error('Failed to fetch scans by date from Netlify:', error);
+      return [];
+    }
+  },
+
+  // Search scans by tracking number (substring search) - FROM NETLIFY
+  async searchScans(term: string, limit: number = 200): Promise<Scan[]> {
+    try {
+      const normalizedTerm = term.replace(/[\s-]/g, '').toUpperCase();
+      const allScans = await fetchScansFromNetlify();
+      return allScans
+        .filter(scan => scan.tracking.includes(normalizedTerm))
+        .slice(0, limit);
+    } catch (error) {
+      console.error('Failed to search scans from Netlify:', error);
+      return [];
+    }
+  },
+
+  // Check if tracking exists for today - FROM NETLIFY
+  async checkDuplicateToday(tracking: string): Promise<Scan | undefined> {
+    try {
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+      const endOfDay = startOfDay + 24 * 60 * 60 * 1000 - 1;
+      
+      const allScans = await fetchScansFromNetlify();
+      return allScans.find(
+        scan => 
+          scan.tracking === tracking && 
+          scan.timestamp >= startOfDay && 
+          scan.timestamp <= endOfDay
+      );
+    } catch (error) {
+      console.error('Failed to check duplicate from Netlify:', error);
+      return undefined;
+    }
+  },
+
+  // Update scan checked status - DIRECTLY TO NETLIFY
+  async updateScanChecked(id: string | number, checked: boolean): Promise<number> {
+    try {
+      await updateScanOnNetlify(id, { checked });
+      return 1; // Success
+    } catch (error) {
+      console.error('Failed to update scan on Netlify:', error);
+      throw error;
+    }
+  },
+
+  // Delete scans by IDs - DIRECTLY TO NETLIFY
+  async deleteScans(ids: (string | number)[]): Promise<void> {
+    try {
+      await deleteScansFromNetlify(ids);
+    } catch (error) {
+      console.error('Failed to delete scans from Netlify:', error);
+      throw error;
+    }
+  },
+
+  // Get scan by exact tracking number - FROM NETLIFY
+  async getScanByTracking(tracking: string): Promise<Scan | undefined> {
+    try {
+      const allScans = await fetchScansFromNetlify();
+      return allScans.find(scan => scan.tracking === tracking);
+    } catch (error) {
+      console.error('Failed to get scan by tracking from Netlify:', error);
+      return undefined;
+    }
+  },
+
+  // Get latest scan - FROM NETLIFY
+  async getLatestScan(): Promise<Scan | undefined> {
+    try {
+      const scans = await fetchScansFromNetlify();
+      if (scans.length === 0) return undefined;
+      return scans.sort((a, b) => b.timestamp - a.timestamp)[0];
+    } catch (error) {
+      console.error('Failed to get latest scan from Netlify:', error);
+      return undefined;
+    }
+  },
+
+  // Get scans count - FROM NETLIFY
+  async getScansCount(): Promise<number> {
+    try {
+      const scans = await fetchScansFromNetlify();
+      return scans.length;
+    } catch (error) {
+      console.error('Failed to get scans count from Netlify:', error);
+      return 0;
+    }
+  },
+
+  // Clear all scans - FROM NETLIFY
+  async clearAllScans(): Promise<void> {
+    try {
+      const allScans = await fetchScansFromNetlify();
+      const ids = allScans.map(scan => scan.id).filter((id): id is string | number => id !== undefined);
+      if (ids.length > 0) {
+        await deleteScansFromNetlify(ids);
       }
     } catch (error) {
-      console.error('Failed to sync checked status to Netlify:', error);
-      // Continue - local update succeeded
-    }
-    
-    return result;
-  },
-
-  // Delete scans by IDs
-  async deleteScans(ids: number[]): Promise<void> {
-    // Get netlify IDs before deleting
-    const netlifyIds: string[] = [];
-    for (const id of ids) {
-      const scan = await db.scans.get(id);
-      if (scan?.netlifyId) {
-        netlifyIds.push(scan.netlifyId);
-      }
-    }
-    
-    // Delete from local database
-    await db.scans.bulkDelete(ids);
-    
-    // Sync deletions to Netlify in the background
-    if (netlifyIds.length > 0) {
-      try {
-        await deleteScansFromNetlify(netlifyIds);
-      } catch (error) {
-        console.error('Failed to sync deletions to Netlify:', error);
-        // Continue - local deletion succeeded
-      }
+      console.error('Failed to clear all scans from Netlify:', error);
+      throw error;
     }
   },
 
-  // Get scan by exact tracking number
-  async getScanByTracking(tracking: string): Promise<Scan | undefined> {
-    return await db.scans.where('tracking').equals(tracking).first();
-  },
-
-  // Get latest scan
-  async getLatestScan(): Promise<Scan | undefined> {
-    return await db.scans.orderBy('timestamp').reverse().first();
-  },
-
-  // Get scans count
-  async getScansCount(): Promise<number> {
-    return await db.scans.count();
-  },
-
-  // Clear all scans
-  async clearAllScans(): Promise<void> {
-    await db.scans.clear();
-  },
-
-  // Export all scans
+  // Export all scans - FROM NETLIFY
   async exportAllScans(): Promise<Scan[]> {
-    return await db.scans.toArray();
+    try {
+      return await fetchScansFromNetlify();
+    } catch (error) {
+      console.error('Failed to export scans from Netlify:', error);
+      return [];
+    }
   },
 
-  // Import scans (merge, skip duplicates by tracking + same day)
+  // Import scans (merge, skip duplicates by tracking + same day) - TO NETLIFY
   async importScans(scans: Omit<Scan, 'id'>[]): Promise<{ imported: number; skipped: number }> {
     let imported = 0;
     let skipped = 0;
 
     for (const scan of scans) {
-      const existing = await this.checkDuplicateToday(scan.tracking);
-      if (existing) {
+      try {
+        const existing = await this.checkDuplicateToday(scan.tracking);
+        if (existing) {
+          skipped++;
+        } else {
+          await this.addScan(scan);
+          imported++;
+        }
+      } catch (error) {
+        console.error('Failed to import scan:', error);
         skipped++;
-      } else {
-        await this.addScan(scan);
-        imported++;
       }
     }
 
@@ -181,63 +193,38 @@ export const scanOperations = {
   }
 };
 
-// CRUD operations for logs
+// CRUD operations for logs - REMOVED (not needed for cloud-only storage)
 export const logOperations = {
-  // Add a log entry
   async addLog(message: string): Promise<number> {
-    const id = await db.logs.add({
-      message,
-      ts: Date.now()
-    });
-    return id as number;
+    console.log('Log:', message);
+    return Date.now();
   },
 
-  // Get recent logs
-  async getRecentLogs(limit: number = 100): Promise<Log[]> {
-    return await db.logs.orderBy('ts').reverse().limit(limit).toArray();
+  async getRecentLogs(_limit: number = 100): Promise<Log[]> {
+    return [];
   },
 
-  // Clear old logs (keep only recent ones)
-  async clearOldLogs(keepRecentCount: number = 1000): Promise<void> {
-    const allLogs = await db.logs.orderBy('ts').reverse().toArray();
-    if (allLogs.length > keepRecentCount) {
-      const logsToDelete = allLogs.slice(keepRecentCount);
-      const idsToDelete = logsToDelete.map(log => log.id!);
-      await db.logs.bulkDelete(idsToDelete);
-    }
+  async clearOldLogs(_keepRecentCount: number = 1000): Promise<void> {
+    // No-op
   },
 
-  // Clear all logs
   async clearAllLogs(): Promise<void> {
-    await db.logs.clear();
+    // No-op
   }
 };
 
-// Database utilities
+// Database utilities - REMOVED (cloud-only, no local database)
 export const dbUtils = {
-  // Get database size estimate
   async getDatabaseSize(): Promise<{ scans: number; logs: number }> {
-    const scansCount = await db.scans.count();
-    const logsCount = await db.logs.count();
-    return { scans: scansCount, logs: logsCount };
+    const scansCount = await scanOperations.getScansCount();
+    return { scans: scansCount, logs: 0 };
   },
 
-  // Clear entire database
   async clearDatabase(): Promise<void> {
-    await db.scans.clear();
-    await db.logs.clear();
+    await scanOperations.clearAllScans();
   },
 
-  // Check if database is available
   async isDatabaseAvailable(): Promise<boolean> {
-    try {
-      await db.open();
-      return true;
-    } catch (error) {
-      console.error('Database not available:', error);
-      return false;
-    }
+    return true; // Always available (Netlify cloud)
   }
 };
-
-export default db;
