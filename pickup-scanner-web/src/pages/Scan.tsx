@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { 
   ArrowLeft, 
   Camera, 
-  Check,
   FlashlightOff, 
   Flashlight, 
   Keyboard, 
@@ -41,7 +40,6 @@ export default function Scan() {
   const [flashOn, setFlashOn] = useState(false);
   const [lastScanId, setLastScanId] = useState<string | null>(null);
   const [showManualInput, setShowManualInput] = useState(false);
-  const [showScanButton, setShowScanButton] = useState(false); // State for showing scan next button
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -328,17 +326,21 @@ export default function Scan() {
           if (tracking && tracking.trim()) {
             console.log('📱 Barcode detected:', tracking);
             
-            // Clear interval immediately to prevent duplicate scans
+            addScanMutation.mutate(tracking);
+            
+            // DON'T stop scanning - keep camera running for continuous scans
+            // Just pause briefly to avoid immediate duplicate scans
             if (scanIntervalRef.current) {
               clearInterval(scanIntervalRef.current);
               scanIntervalRef.current = null;
             }
             
-            addScanMutation.mutate(tracking);
-            
-            // Stop scanning and show scan button
-            stopScanning();
-            setShowScanButton(true);
+            // Resume scanning after 1.5 seconds
+            setTimeout(() => {
+              if (isScanning && barcodeDetectorRef.current && videoRef.current) {
+                scanIntervalRef.current = window.setInterval(detectBarcodes, 50);
+              }
+            }, 1500);
           }
         }
       } catch (error) {
@@ -371,10 +373,18 @@ export default function Scan() {
     
     codeReaderRef.current = new BrowserMultiFormatReader();
     
+    let isPaused = false;
+    
     // Use continuous decode for better reliability
     const scanContinuously = async () => {
       const reader = codeReaderRef.current;
       if (!reader || !videoElement || !isScanning) return;
+      
+      // Skip if we're in pause period after a successful scan
+      if (isPaused) {
+        setTimeout(() => scanContinuously(), 100);
+        return;
+      }
       
       try {
         const result = await reader.decodeOnceFromVideoDevice(undefined, videoElement.id || 'video');
@@ -386,10 +396,15 @@ export default function Scan() {
             
             addScanMutation.mutate(tracking);
             
-            // Stop scanning and show scan button
-            stopScanning();
-            setShowScanButton(true);
-            return; // Don't continue scanning after success
+            // DON'T stop scanning - just pause briefly to avoid duplicates
+            isPaused = true;
+            setTimeout(() => {
+              isPaused = false;
+            }, 1500);
+            
+            // Continue scanning after brief pause
+            setTimeout(() => scanContinuously(), 1500);
+            return;
           }
         }
         
@@ -681,35 +696,6 @@ export default function Scan() {
           </div>
         )}
       </div>
-
-      {/* Super Big Scan Next Button - Bottom */}
-      {showScanButton && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-gradient-to-t from-slate-950 via-slate-950/95 to-transparent px-4 pb-safe">
-          <div className="mx-auto max-w-lg pb-8">
-            <div className="mb-4 text-center">
-              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 text-green-400">
-                <Check className="h-10 w-10" />
-              </div>
-              <h3 className="text-xl font-bold text-white">Barcode Scanned!</h3>
-              <p className="mt-1 text-base text-slate-300">Ready to scan the next item</p>
-            </div>
-            <button
-              onClick={() => {
-                console.log('🔄 Scan Next button clicked');
-                setShowScanButton(false);
-                startCamera();
-              }}
-              className="w-full rounded-3xl bg-gradient-to-r from-blue-600 to-blue-500 px-12 py-7 text-2xl font-black text-white shadow-2xl transition-all duration-300 hover:from-blue-500 hover:to-blue-400 hover:scale-[1.02] hover:shadow-3xl focus:outline-none focus:ring-4 focus:ring-blue-500/50 active:scale-[0.98]"
-              type="button"
-            >
-              <span className="flex items-center justify-center gap-4">
-                <Camera className="h-10 w-10" />
-                SCAN NEXT
-              </span>
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Bottom Controls */}
       <div className="relative z-30 bg-slate-950/95 backdrop-blur" style={{ paddingBottom: '6rem' }}>
