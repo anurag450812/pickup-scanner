@@ -165,18 +165,15 @@ export default function Scan() {
     if (isBarcodeDetectorSupported() && window.BarcodeDetector) {
       barcodeDetectorRef.current = new window.BarcodeDetector({
         formats: [
-          'code_128',
-          'code_39', 
-          'code_93',
-          'codabar',
-          'ean_13', 
-          'ean_8', 
-          'itf',
-          'upc_a', 
-          'upc_e',
-          'qr_code',
-          'pdf417',
-          'data_matrix'
+          'code_128',    // Common shipping labels
+          'code_39',     // Common barcodes
+          'code_93',     // Extended barcode format
+          'codabar',     // Old format still used
+          'ean_13',      // European/International product code
+          'ean_8',       // Short European code
+          'itf',         // Interleaved 2 of 5
+          'upc_a',       // US product code
+          'upc_e'        // Short US product code
         ]
       });
       return true;
