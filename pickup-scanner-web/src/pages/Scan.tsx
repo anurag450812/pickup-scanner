@@ -82,18 +82,27 @@ export default function Scan() {
 
       return { scanId, tracking: normalized };
     },
-    onSuccess: ({ scanId, tracking }) => {
-      setLastScanId(scanId);
-      queryClient.invalidateQueries({ queryKey: ['homeStats'] });
+    onMutate: (tracking: string) => {
+      // Immediate feedback BEFORE network request
+      const normalized = normalizeTracking(tracking);
       
-      // Feedback based on preferences
+      // Haptic and audio feedback immediately
       const beepPref = localStorage.getItem('beepOnScan') !== 'false';
       const vibratePref = localStorage.getItem('vibrateOnScan') !== 'false';
       if (vibratePref) vibrate(100);
       if (beepPref) playBeep();
       
+      // Show immediate loading toast
+      toast.loading(`Scanning: ${normalized}`, { id: 'scan-loading' });
+    },
+    onSuccess: ({ scanId, tracking }) => {
+      setLastScanId(scanId);
+      queryClient.invalidateQueries({ queryKey: ['homeStats'] });
+      
+      // Dismiss loading toast and show success
+      toast.dismiss('scan-loading');
       toast.success(`✅ Scanned: ${tracking}`, {
-        duration: 2000, // Shorter duration for continuous scanning
+        duration: 2000,
         action: {
           label: 'Undo',
           onClick: () => undoLastScan()
@@ -101,6 +110,7 @@ export default function Scan() {
       });
     },
     onError: (error: Error) => {
+      toast.dismiss('scan-loading');
       if (error.message === 'DUPLICATE') {
         toast.warning('Duplicate scan for today', {
           action: {
